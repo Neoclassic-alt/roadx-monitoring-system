@@ -1,0 +1,13 @@
+{
+    "title": "Информация о цвете светофора",
+    "author": "Борис Истигечев",
+    "description": "В рамках заданных контуров позволяет установить цвет светофора",
+    "version": "1/2",
+    "previous": ["traffic_light_detector"],
+    "display": ["additional_data", "video_data"],
+    "count_of_series": 3,
+    "plot_types": ["bar", "bar", "bar"],
+    "x_axis_label": "Прошло времени, с",
+    "series_labels": ["Красный", "Жёлтый", "Зелёный"],
+    "series_colors": [[255, 0, 0], [255, 255, 0], [52, 233, 122]]
+}

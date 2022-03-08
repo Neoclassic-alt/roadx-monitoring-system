@@ -1,0 +1,8 @@
+{
+    "title": "Распознавание машин",
+    "author": "Борис Истигечев",
+    "description": "Распознаёт машины и выделяет их контуром",
+    "version": "1.0",
+    "display": ["additional_data"],
+	"heavy": true
+}

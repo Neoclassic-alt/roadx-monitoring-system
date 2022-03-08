@@ -1,0 +1,52 @@
+[
+    {
+        "title": "Модель", 
+        "type": "combo", 
+        "var": "size", 
+        "settings": ["nano", "small", "medium", "big", "extra"], 
+        "default_value": "small", 
+        "heavy_reload": true
+    },
+    {
+        "title": "Порог", 
+        "type": "number", 
+        "var": "threshold", 
+        "default_value": 0.5
+    },
+    {
+        "title": "Используемое устройство", 
+        "type": "combo", 
+        "var": "device", 
+        "settings": ["Процессор", "Видеокарта"], 
+        "default_value": "Процессор", 
+        "description": "При наличии видеокарты с поддержкой CUDA выберите пункт \"Видеокарта\".\nОбработка изображения выполняется гораздо быстрее", 
+        "heavy_reload": true
+    },
+    {
+        "title": "Принудительная перезагрузка", 
+        "type": "checkbox", 
+        "var": "force_reload", 
+        "default_value": false
+    },
+    {
+        "title": "Отображать контуры", 
+        "type": "checkbox", 
+        "var": "display",
+        "default_value": true
+    },
+    {
+        "title": "Цвет контура", 
+        "type": "combo", 
+        "var": "color", 
+        "description": "Выберите цвет контура, которым будет выделяться объект", 
+        "settings": ["Чёрный", "Серый", "Серебряный", "Белый", "Фуксия", "Пурпурный", "Синий", "Красный", "Малиновый", "Жёлтый", "Оливковый", "Лайм", "Зелёный", "Бирюзовый", "Кирпичный", "Небесный"], 
+        "default_value": "Серебряный"
+    },
+    {
+        "title": "Толщина линии", 
+        "type": "number", 
+        "var": "thinkness", 
+        "settings": {"int": true, "min": 1, "max": 5000}, 
+        "default_value": 2
+    }
+]

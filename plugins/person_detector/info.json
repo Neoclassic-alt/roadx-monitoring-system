@@ -1,0 +1,8 @@
+{
+    "title": "Распознавание людей",
+    "author": "Борис Истигечев",
+    "description": "Распознаёт людей и выделяет их контуром",
+    "version": "1.0",
+    "display": ["additional_data"],
+	"heavy": true
+}

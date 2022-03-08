@@ -1,0 +1,8 @@
+{
+    "title": "Распознавание светофоров",
+    "author": "Борис Истигечев",
+    "description": "Распознаёт светофоры и выделяет их контуром",
+    "version": "1.0",
+    "display": ["additional_data"],
+	"heavy": true
+}

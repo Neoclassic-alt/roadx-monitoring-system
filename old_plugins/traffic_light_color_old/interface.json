@@ -1,0 +1,40 @@
+[
+    {
+        "title": "Цвет контура светофоров", 
+        "type": "combo", 
+        "var": "color", 
+        "description": "Выберите цвет контура, которым будет выделяться объект", 
+        "settings": ["Чёрный", "Серый", "Серебряный", "Белый", "Фуксия", "Пурпурный", "Синий", "Красный", "Малиновый", "Жёлтый", "Оливковый", "Лайм", "Зелёный", "Бирюзовый", "Кирпичный", "Небесный"], 
+        "default_value": "Зелёный"
+    }, 
+    {
+        "title": "Порог определения цвета", 
+        "description": "Рекомендуется значение не более 0.03",
+        "type": "slider", 
+        "var": "threshold", 
+        "settings": {"min": 0, "max": 0.25}, 
+        "default_value": 0.01
+    },
+    {
+        "title": "Количество кадров в секунду", 
+        "description": "Влияет на отображение времени на графике",
+        "type": "number", 
+        "var": "frame_rate",
+        "settings": {"min": 1}, 
+        "default_value": 30
+    },
+    {
+        "title": "Номер светофора", 
+        "type": "number", 
+        "var": "traffic_light_number", 
+        "settings": {"min": 1, "int": true, "required": true}, 
+        "default_value": 1
+    },
+    {
+        "title": "Указывать цвет на изображении", 
+        "type": "checkbox", 
+        "var": "write_to_image", 
+        "default_value": true, 
+        "description": "Показать цвет в словесном виде: Red, Yellow, Green"
+    }
+]

@@ -1,0 +1,59 @@
+[
+    {
+        "title": "Угол поворота", 
+        "default_value": -8, 
+        "type": "number", 
+        "var": "angle", 
+        "settings": {"min": -45, "max": 45}, 
+        "description": "Угол поворота изображения перед выполнением поиска крайней точки"
+    },
+    {
+        "title": "Порог бинаризации",
+        "default_value": 165, 
+        "type": "number",
+        "var": "thresh", 
+        "settings": {"int": true, "min": 0, "max": 255}
+    },
+    {
+        "title": "Координата X верхней точки прямоугльника", 
+        "default_value": 300, 
+        "type": "number",
+        "var": "x1", 
+        "settings": {"int": true}
+    },
+    {
+        "title": "Координата Y верхней точки прямоугльника", 
+        "default_value": 363, 
+        "type": "number",
+        "var": "y1", 
+        "settings": {"int": true}
+    },
+    {
+        "title": "Координата X нижней точки прямоугльника", 
+        "default_value": 360, 
+        "type": "number",
+        "var": "x2", 
+        "settings": {"int": true}
+    },
+    {
+        "title": "Координата Y нижней точки прямоугльника", 
+        "default_value": 374, 
+        "type": "number",
+        "var": "y2", 
+        "settings": {"int": true}
+    },
+    {
+        "title": "Время начала (часы)", 
+        "default_value": 15, 
+        "type": "slider", 
+        "var": "hours", 
+        "settings": {"min": 0, "max": 23, "int": true}
+    },
+    {
+        "title": "Время начала (минуты)", 
+        "default_value": 0, 
+        "type": "slider", 
+        "var": "minutes", 
+        "settings": {"min": 0, "max": 59, "int": true}
+    }
+]

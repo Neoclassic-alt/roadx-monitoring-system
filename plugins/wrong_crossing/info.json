@@ -1,0 +1,13 @@
+{
+    "title": "Переход в неположенном месте",
+    "author": "Борис Истигечев",
+    "description": "Сличает данные, обнаруживая переход в неположенном месте",
+    "version": "1.4.8.8",
+    "previous": ["traffic_light_detector", "traffic_light_color", "person_detector", "set_points_road", "set_points_pedestrian_crossing"],
+    "display": ["additional_data", "video_data"],
+    "count_of_series": 3,
+    "plot_types": ["stem", "stem", "stem"],
+    "x_axis_label": "Прошло времени, с",
+    "series_labels": ["Нарушители", "Не определено", "Без нарушений"],
+    "series_colors": [[255, 0, 0], [225, 221, 102], [52, 233, 122]]
+}
