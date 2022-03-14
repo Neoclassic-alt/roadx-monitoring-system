@@ -1,3 +1,4 @@
+from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
 from components.functions import AppInfo as app_info
@@ -12,7 +13,6 @@ import warnings
 import pyperclip as clipboard
 import time
 import webbrowser
-import components.custom_components as custom_components
 
 # загрузка модулей
 storage.set_value(keys.PLUGINS, pm.load_plugins())
@@ -93,19 +93,18 @@ with dpg.font_registry():
 
 with dpg.texture_registry(tag="texture_registry"):
     dpg.add_raw_texture(2000, 2000, storage.current_data, format=dpg.mvFormat_Float_rgba, tag="main_image")
+    app_info.add_static_texture(r"assets/images/go-to-begin-color.png", "go_to_begin_img")
+    app_info.add_static_texture(r"assets/images/prev-frame-color.png", "prev_frame_img")
+    app_info.add_static_texture(r"assets/images/play-color.png", "play_img")
+    app_info.add_static_texture(r"assets/images/pause-color.png", "pause_img")
+    app_info.add_static_texture(r"assets/images/next-frame-color.png", "next_frame_img")
+    app_info.add_static_texture(r"assets/images/go-to-end-color.png", "go_to_end_img")
+    app_info.add_static_texture(r"assets/new-icons/help.png", "help_img")
     app_info.add_static_texture(r"assets/images/plus-24.png", "plus_img")
     app_info.add_static_texture(r"assets/images/minus-24.png", "minus_img")
     app_info.add_static_texture(r"assets/images/crosshair-three.png", "crosshair_img")
-    app_info.add_static_texture(r"assets/images/app-icon-128x128.png", "app_splash")
-    app_info.add_static_texture(r"assets/images/app-icon-32x32.png", "app_logo")
-    app_info.add_static_texture(r"assets/new-icons/help.png", "help_img")
     app_info.add_static_texture(r"assets/new-icons/red-point.png", "red_point")
     app_info.add_static_texture(r"assets/new-icons/add-image.png", "add_image")
-    app_info.add_static_texture(r"assets/new-icons/add-folder.png", "add_folder")
-    app_info.add_static_texture(r"assets/new-icons/globus-add.png", "add_from_internet")
-    app_info.add_static_texture(r"assets/new-icons/globus-add-inactive.png", "add_from_internet_inactive")
-    app_info.add_static_texture(r"assets/new-icons/add-video.png", "add_video")
-    app_info.add_static_texture(r"assets/new-icons/add-video-inactive.png", "add_video_inactive")
     app_info.add_static_texture(r"assets/new-icons/image-actual.png", "image_actual")
     app_info.add_static_texture(r"assets/new-icons/next-file-o.png", "next_file")
     app_info.add_static_texture(r"assets/new-icons/prev-file-o.png", "prev_file")
@@ -115,25 +114,20 @@ with dpg.texture_registry(tag="texture_registry"):
     app_info.add_static_texture(r"assets/new-icons/zoom-plus-inactive.png", "zoom_plus_inactive")
     app_info.add_static_texture(r"assets/new-icons/zoom-minus-o.png", "zoom_minus")
     app_info.add_static_texture(r"assets/new-icons/zoom-plus-o.png", "zoom_plus")
-    app_info.add_static_texture(r"assets/new-icons/expand.png", "expand")
-    app_info.add_static_texture(r"assets/new-icons/demo-badge.png", "demo_badge")
 
-with dpg.handler_registry(tag="global_handlers"):
+with dpg.handler_registry():
     dpg.add_mouse_release_handler(callback=pm.undragging)
     dpg.add_key_press_handler(78, callback=lambda: dpg.show_item("settings_of_the_program"))
     dpg.add_key_press_handler(65, callback=pm.apply_chain)
     dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
-    dpg.add_mouse_click_handler(callback=app_info.close_all_menus)
+    dpg.add_mouse_move_handler(callback=app_info.set_default_state)
 
 with dpg.item_handler_registry(tag="image_handler_registry"):
     dpg.add_item_hover_handler(callback=pm.get_mouse_pos)
     dpg.add_item_clicked_handler(callback=pm.set_2d_point_values)
 
-file_button_registry = app_info.buttonize("file_button", 
-lambda: dpg.show_item("file_menu_window") if not dpg.get_item_configuration("file_menu_window")['show'] else None)
-app_button_registry = app_info.buttonize("app_button", 
-lambda: dpg.show_item("app_menu_window") if not dpg.get_item_configuration("app_menu_window")['show'] else None)
-information_button_registry = app_info.buttonize("information_button", None)
+with dpg.item_handler_registry(tag="information_button_registry"):
+    dpg.add_item_hover_handler(callback=app_info.set_hover_state)
 
 dpg.add_item_handler_registry(tag="none_handler")
 
@@ -146,6 +140,7 @@ tag="plugins_window", no_resize=True):
             num_items=10, width=315, callback=pm.check_plugin, drag_callback=pm.drag_plugin, tracked=True)
             with dpg.drag_payload(parent="list_of_plugins", drag_data=0, payload_type="plugin", tag="drop_plugin"):
                 dpg.add_text(dpg.get_value("list_of_plugins"), tag="drag_text")
+            #dpg.bind_item_theme(dpg.last_container(), themes.get_popup_theme())
             with dpg.group(horizontal=True, tag="previous_warning_plugin", horizontal_spacing=3, show=False):
                 dpg.add_text("Для работы требуются другие плагины", indent=12)
                 dpg.add_image("help_img")
@@ -243,65 +238,44 @@ directory_selector=False, show=False, default_path="E:/opencv", file_count=1, wi
 with dpg.window(tag="objects_window"):
     dpg.bind_font(main_font)
     with dpg.group(horizontal=True, tag="main_menu", horizontal_spacing=0):
-        dpg.add_spacer(width=10)
-        with dpg.child_window(label="Файл", tag="file_button", height=32, width=74):
-            dpg.add_spacer(height=2)
-            with dpg.group(horizontal=True, horizontal_spacing=5):
-                dpg.add_text("Файл")
-                with dpg.group():
-                    dpg.add_spacer(height=5)
-                    dpg.add_image("expand")
-        dpg.bind_item_theme("file_button", themes.default_button_theme())
-        dpg.bind_item_handler_registry("file_button", file_button_registry)
-
+        dpg.add_button(label="Файл")
         dpg.add_button(label="Обработка")
-
-        with dpg.child_window(label="Приложение", tag="app_button", height=32, width=130):
-            dpg.add_spacer(height=2)
-            with dpg.group(horizontal=True, horizontal_spacing=5):
-                dpg.add_text("Приложение")
-                with dpg.group():
-                    dpg.add_spacer(height=5)
-                    dpg.add_image("expand")
-        dpg.bind_item_theme("app_button", themes.default_button_theme())
-        dpg.bind_item_handler_registry("app_button", app_button_registry)
-
+        dpg.add_button(label="Лицензия")
+        dpg.add_button(label="Приложение")
         with dpg.child_window(label="Информация", tag="information_button", height=32, width=124):
             dpg.add_spacer(height=2)
             with dpg.group(horizontal=True, horizontal_spacing=1):
                 dpg.add_text("Информация")
                 dpg.add_image("red_point")
-        dpg.bind_item_theme("information_button", themes.default_button_theme())
-        dpg.bind_item_handler_registry("information_button", information_button_registry)
+        dpg.add_image_button("add_image", tag="add_files_button")
         dpg.add_spacer(width=10)
 
-        with dpg.child_window(label="Добавить файлы", tag="add_file_buttons", height=32, width=128):
-            with dpg.group(horizontal=True, horizontal_spacing=0):
-                dpg.add_image_button("add_image")
-                dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_folder")
-                dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_from_internet_inactive")
-                dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_video_inactive")
-                dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-        dpg.bind_item_theme("add_file_buttons", themes.group_buttons_theme())
+        with dpg.child_window(label="Имя файла", tag="file_name_form", height=32, width=260):
+            dpg.add_spacer()
+            dpg.bind_item_theme(dpg.last_item(), themes.null_itemspacing())
+            with dpg.group(horizontal=True, horizontal_spacing=10):
+                dpg.add_image("image_actual")
+                with dpg.group():
+                    dpg.add_color_button((246, 246, 246), width=1, height=1)
+                    dpg.bind_item_theme(dpg.last_item(), themes.null_itemspacing())
+                    dpg.add_text("fregon.jpg")
+                    dpg.bind_item_font(dpg.last_item(), "mini_font")
         dpg.add_spacer(width=10)
 
         with dpg.child_window(label="Переключить файлы", tag="manipulate_file_buttons", height=32, width=96):
             with dpg.group(horizontal=True, horizontal_spacing=0):
                 dpg.add_image_button("prev_file")
-                dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
+                dpg.bind_item_theme(dpg.last_item(), themes.button_square_theme())
                 dpg.add_image_button("more_files")
-                dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
+                dpg.bind_item_theme(dpg.last_item(), themes.button_square_theme())
                 dpg.add_image_button("next_file")
-                dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
+                dpg.bind_item_theme(dpg.last_item(), themes.button_square_theme())
         dpg.bind_item_theme("manipulate_file_buttons", themes.group_buttons_theme())
 
         dpg.add_spacer(width=10)
         dpg.add_image_button("close_image", tag="close_files_button")
         dpg.add_spacer(width=10)
-        dpg.add_child_window(height=32, width=-270)
+        dpg.add_child_window(height=32, width=-250)
         dpg.bind_item_theme(dpg.last_item(), themes.white_background())
         with dpg.child_window(label="Переключить режим", tag="change_mode", height=32, width=130):
             dpg.add_spacer(height=1)
@@ -323,82 +297,125 @@ with dpg.window(tag="objects_window"):
         with dpg.child_window(label="Изменить размер изображения", tag="zoom", height=32, width=109):
             with dpg.group(horizontal=True, horizontal_spacing=0):
                 dpg.add_image_button("zoom_plus")
-                dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
+                dpg.bind_item_theme(dpg.last_item(), themes.button_square_theme())
                 dpg.add_image_button("zoom_minus")
-                dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
+                dpg.bind_item_theme(dpg.last_item(), themes.button_square_theme())
                 dpg.add_button(label="100%")
                 dpg.bind_item_theme(dpg.last_item(), themes.zoom_ind_theme())
         dpg.bind_item_theme("zoom", themes.group_buttons_theme())
 
     with dpg.group(show=False, tag="group_of_objects"):
-        pass
+        dpg.add_spacer(height=25)
+        dpg.add_text("Перейти к объекту: ")
+        dpg.add_combo(items=(), tag="combo_of_objects", callback=fo.change_object, width=500)
 
-    with dpg.child_window(tag="hello_splash", height=-32):
-        dpg.add_spacer(height=160, tag="vertical_splash_spacer")
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=450, tag="splash_upper_text_spacer")
-            dpg.add_text("Приветствуем в программе RoadX!")
-            dpg.bind_item_font(dpg.last_item(), "title")
         dpg.add_spacer(height=10)
+        dpg.add_text("Цепочка плагинов:")
         with dpg.group(horizontal=True):
-            dpg.add_spacer(width=550, tag="splash_img_spacer")
-            dpg.add_image("app_splash")
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=340, tag="splash_lower_text_spacer")
-            dpg.add_text("Для начала работы откройте объект (зелёные кнопки или меню \"Файл\")")
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=355, tag="splash_warning_text_spacer")
-            dpg.add_text("Для разблокировки всех возможностей активируйте полную версию", color=(249, 80, 80))
-    dpg.bind_item_theme("hello_splash", themes.splash_window())
+            dpg.add_text("Нет плагинов", tag="chain_of_plugins")
+            with dpg.group():
+                dpg.add_spacer()
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Редактировать", callback=lambda: dpg.show_item("plugins_window"))
+                    dpg.add_button(label="Применить", callback=pm.apply_chain, 
+                    show=not storage.program_settings["auto_apply"], tag="apply_chain_of_plugins_button")
+                    #dpg.add_button(label="Применить ко всем кадрам", callback=pm.apply_chain, 
+                    #show=not storage.program_settings["auto_apply"], tag="apply_chain_of_plugins_button")
+                    dpg.bind_item_font("chain_of_plugins", "chain_of_plugins_font")
+        dpg.add_spacer(height=5)
 
-    ### Строка с информацией (или с загрузкой)
-    with dpg.child_window(tag="status_bar", height=28):
+        with dpg.group(tag="limit_1_minute"):
+            dpg.add_text("""В демо-версии можно загружать ролики не длиннее 1 минуты!
+    Для получения всех функций активируйте приложение.""", color=(230, 0, 0))
+            dpg.add_spacer(height=10)
+
+        with dpg.group(show=True, tag="state_of_loading"):
+            with dpg.group(horizontal=True):
+                #dpg.add_loading_indicator(circle_count=6, speed=2, style=0, radius=1.5)
+                dpg.add_text("Загрузка плагина...", tag="text_of_loading")
+                dpg.add_progress_bar(tag="progress_bar", width=300, show=False)
+                dpg.add_spacer(height=10)
+
+        with dpg.collapsing_header(label="Результаты обработки изображения при помощи плагинов", show=False, tag="additional_text", closable=True):
+            dpg.add_spacer()
+            with dpg.group(horizontal=True, indent=15):
+                dpg.add_button(label="Копировать всё", callback=app_info.copy_all_additional_data)
+                dpg.add_button(label="Развернуть все блоки", callback=lambda: app_info.manage_all_headers("expand"))
+                dpg.add_button(label="Свернуть все блоки", callback=lambda: app_info.manage_all_headers("roll up"))
+            dpg.add_spacer()
+            dpg.add_group(tag="additional_text_group", indent=18)
+
+            dpg.add_spacer(height=10)
+        with dpg.collapsing_header(label="Результаты обработки видео при помощи плагинов", show=False, tag="video_data", closable=True):
+            dpg.add_spacer()
+            with dpg.group(horizontal=True):
+                with dpg.group():
+                    dpg.add_spacer(height=3)
+                    dpg.add_text("В отдельном окне: ")
+                with dpg.child_window(horizontal_scrollbar=True, height=44):
+                    dpg.add_group(horizontal=True, tag="plot_buttons")
+            with dpg.child_window(horizontal_scrollbar=True, height=278):
+                dpg.add_group(horizontal=True, tag="video_data_group")
+
+        # видеопроигрыватель
+        with dpg.group(tag="video_player", show=False):
+            dpg.add_spacer(height=5)
+            dpg.add_separator()
+            dpg.add_spacer(height=5)
+            with dpg.group(horizontal=True):
+                dpg.add_checkbox(label="Применять плагины ко всем кадрам", default_value=True, tag="apply_to_all_frames")
+                dpg.add_image("help_img")
+                with dpg.tooltip(dpg.last_item()):
+                    with dpg.group(horizontal=True):
+                        dpg.add_spacer()
+                        dpg.add_text("Включение данной настройки позволит не тратить время на применение плагинов к каждому отдельному " +
+                        "кадру при переключении кадров. При изменении текущих примененных плагинов обрабатываются все изображения разом.", wrap=600)
+                        dpg.add_spacer()
+                    dpg.add_spacer()
+            #dpg.add_spacer(height=3)
+
+            with dpg.group(horizontal=True, tag="video_buttons"):
+                dpg.add_image_button("go_to_begin_img", callback=pv.go_to_begin)
+                dpg.add_image_button("prev_frame_img", callback=pv.go_to_prev_frame)
+                dpg.add_image_button("next_frame_img", callback=pv.go_to_next_frame)
+                dpg.add_image_button("go_to_end_img", callback=pv.go_to_end)
+                with dpg.group():
+                    dpg.add_spacer(height=0)
+                    dpg.add_text("0 кадров/сек", color=(0, 206, 0), tag="speed_frames_text", show=False)
+            with dpg.group(horizontal=True, tag="video_slider_group"):
+                dpg.add_image_button("play_img", tag="play_button", callback=pv.toggle_play)
+                dpg.bind_item_theme(dpg.last_item(), themes.get_button_theme())
+                with dpg.group():
+                    dpg.add_spacer(height=0)
+                    with dpg.group(horizontal=True):
+                        dpg.add_slider_int(width=400, format="%d/0", tag="video_slider", clamped=True, 
+                        callback=lambda sender, app_data: pv.open_frame(app_data))
+                        dpg.add_text("00:00", tag="video_time")
+                        dpg.add_image("help_img")
+                        with dpg.tooltip(dpg.last_item()):
+                            dpg.add_text("Ctrl+Click на слайдере — ввод кадра")
+                dpg.add_spacer(width=438, tag="third_spacer", show=False)
+                with dpg.group():
+                    dpg.add_spacer(height=0)
+                    with dpg.group(horizontal=True):
+                        dpg.add_image_button("plus_img", callback=lambda: pv.zoom("plus"), tag="plus_zoom_button")
+                        dpg.bind_item_theme(dpg.last_item(), themes.get_button_theme())
+                        dpg.add_image_button("minus_img", callback=lambda: pv.zoom("minus"), tag="minus_zoom_button")
+                        dpg.bind_item_theme(dpg.last_item(), themes.get_button_theme())
+                        dpg.add_button(label="100%", tag="100_zoom_button", show=False, callback=lambda: pv.zoom("100"))
+                        dpg.bind_item_theme(dpg.last_item(), themes.get_button_theme())
+                        dpg.add_text("100%", tag="zoom_text")
         dpg.add_spacer()
-        dpg.add_text("Кадр: 350/367  ·  1280x720 (HD)  ·  30 кадров в секунду  ·  Скорость чтения: N/A  ·  Вес временных файлов: 723 Мб  ·  Всего плагинов: 5 ", indent=20)
+        with dpg.child_window(horizontal_scrollbar=True, tag="main_image_child_window", autosize_x=True, show=False):
+            dpg.add_image("main_image", tag="main_image_desk")
+        dpg.add_button(label="Закрыть и удалить временные файлы", tag="close_and_delete_temp_files", show=False,
+        callback=pv.delete_temp_folders_and_close_video)
 
-### Раскрывающиеся окна "Файл" и "Приложение"
-with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no_move=True, 
-no_resize=True, tag="file_menu_window", width=293, height=380):
-    with dpg.child_window(width=291, height=378, tag="file_menu"):
-        dpg.add_spacer(height=5)
-
-custom_components.menu_item("Открыть файл", "file_menu", shortcut="Ctrl + O", spacer_width=77, width=300, tag="open_file_menu_item")
-custom_components.menu_item("Открыть папку", "file_menu", shortcut="Ctrl + F", spacer_width=75, width=300, tag="open_folder_menu_item")
-custom_components.menu_item("Загрузить из интернета", "file_menu", width=300,
-tag="download_from_internet_menu_item", disabled=True, demo=True)
-custom_components.menu_item("Подключиться к IP-камере", "file_menu", width=300,
-tag="connect_to_camera_menu_item", disabled=True, demo=True)
-dpg.add_color_button((228, 228, 228), indent=20, parent="file_menu", width=253, height=1, no_border=True, no_drag_drop=True)
-custom_components.menu_item("Сохранить изображение / кадр", "file_menu",
-tag="save_image_menu_item", disabled=True)
-custom_components.menu_item("Сохранить все кадры", "file_menu", 
-tag="save_all_frames_menu_item", disabled=True)
-custom_components.menu_item("Сохранить видео", "file_menu",
-tag="save_video_menu_item", disabled=True)
-custom_components.menu_item("Сохранить все изображения", "file_menu",
-tag="save_all_images_menu_item", disabled=True)
-dpg.add_color_button((228, 228, 228), indent=20, parent="file_menu", width=253, height=1, no_border=True, no_drag_drop=True)
-custom_components.menu_item("Закрыть", "file_menu", spacer_width=123, shortcut="Ctrl + C",
-tag="close_menu_item", disabled=True, width=300)
-custom_components.menu_item("Закрыть всё", "file_menu", spacer_width=48, shortcut="Ctrl + Shift + C",
-tag="close_all_images_menu_item", disabled=True, width=300)
-
-dpg.bind_item_theme("file_menu_window", themes.window_shadow())
-
-with dpg.window(label="Приложение", show=False, pos=(181, 48), no_title_bar=True, no_move=True, 
-no_resize=True, tag="app_menu_window", width=224, height=160):
-    with dpg.child_window(width=222, height=158, tag="app_menu"):
-        dpg.add_spacer(height=5)
-
-custom_components.menu_item("Настройки", "app_menu", spacer_width=33, shortcut="Ctrl + N",
-tag="settings_menu_item", width=222)
-custom_components.menu_item("Горячие клавиши", "app_menu", tag="hotkeys_menu_item", width=222)
-custom_components.menu_item("Лицензия и демо-версия", "app_menu", tag="license_menu_item", width=222)
-custom_components.menu_item("О программе", "app_menu", tag="about_program_menu_item", width=222)
-
-dpg.bind_item_theme("app_menu_window", themes.window_shadow())
+    with dpg.group(show=False, tag="report_of_processing"):
+        dpg.add_spacer(height=10)
+        dpg.add_text('Время обработки изображений: ', tag="time_of_processing")
+        dpg.add_text('Обработано потоками изображений: ', tag="count_of_images_processing")
+        dpg.add_button(label="Закрыть", callback=lambda: dpg.hide_item("report_of_processing"))
 
 with dpg.window(label="Предупреждение", show=False, tag="please_connect_flash", pos=(400, 300), no_resize=True, no_collapse=True):
     dpg.add_text("Пожалуйста, вставьте электронный ключ в компьютер!")
@@ -470,18 +487,25 @@ width=310, pos=(300, 200)):
 dpg.add_window(label="График плагина", show=False, autosize=True, no_resize=True, tag="plugin_window")
 
 dpg.bind_theme(themes.get_theme())
+#dpg.bind_item_theme("objects_window", themes.get_theme())
+dpg.bind_item_theme("video_buttons", themes.get_button_theme())
+dpg.bind_item_theme("information_button", themes.information_button_theme())
+dpg.bind_item_theme("add_files_button", themes.add_files_button_theme())
 dpg.bind_item_theme("close_files_button", themes.close_button_theme())
-dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
+dpg.bind_item_theme("file_name_form", themes.file_name_theme())
+
+dpg.bind_item_handler_registry("information_button", "information_button_registry")
 
 dpg.show_style_editor()
 #dpg.show_debug()
 #dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
-dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
+dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150, min_width=1242)
 
-dpg.set_viewport_small_icon("assets/images/app.ico")
-dpg.set_viewport_large_icon("assets/images/app.ico")
+# must be called before showing viewport
+dpg.set_viewport_small_icon("assets/images/icon.ico")
+dpg.set_viewport_resize_callback(app_info.on_resize_viewport)
 
 dpg.setup_dearpygui()
 dpg.set_primary_window("objects_window", True)

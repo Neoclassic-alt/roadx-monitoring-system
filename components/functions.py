@@ -7,7 +7,6 @@ import components.styling as themes
 
 class AppInfo:
     def change_video_texture(shape):
-        #dpg.delete_item("main_raw_image")
         dpg.delete_item("main_image_desk")
         with dpg.texture_registry():
             dpg.add_raw_texture(shape[1], shape[0], storage.current_data, format=dpg.mvFormat_Float_rgba, tag="main_image_desk")
@@ -222,6 +221,44 @@ class AppInfo:
                 dpg.add_stem_series(x=value[0], y=value[1], label=series['label'], parent=y_axis)
             dpg.bind_item_theme(dpg.last_item(), theme)
 
-    def on_resize_viewport():
-        width = dpg.get_viewport_width()
-        dpg.set_item_width("third_spacer", max(width - 767, 0))
+    def set_hover_state(name):
+        dpg.bind_item_theme(name, themes.hover_button_theme())
+
+    def set_active_state(name):
+        dpg.bind_item_theme(name, themes.active_button_theme())
+    
+    def set_default_state(name):
+        dpg.bind_item_theme(name, themes.default_button_theme())
+
+    def buttonize(name, callback):
+        with dpg.item_handler_registry(tag=f"{name}_handler") as handler_registry:
+            dpg.add_item_hover_handler(callback=lambda: AppInfo.set_hover_state(name))
+            dpg.add_item_active_handler(callback=lambda: AppInfo.set_active_state(name))
+            dpg.add_item_active_handler(callback=callback)
+
+        dpg.add_mouse_move_handler(callback=lambda: AppInfo.set_default_state(name), parent="global_handlers")
+
+        return handler_registry
+
+    def set_hover_menu_item_state(name):
+        dpg.bind_item_theme(name, themes.hover_menu_item_theme())
+
+    def set_active_menu_item_state(name):
+        dpg.bind_item_theme(name, themes.active_menu_item_theme())
+    
+    def set_default_menu_item_state(name):
+        dpg.bind_item_theme(name, themes.default_menu_item_theme())
+
+    def buttonize_menu_item(name, callback):
+        with dpg.item_handler_registry(tag=f"{name}_handler") as handler_registry:
+            dpg.add_item_hover_handler(callback=lambda: AppInfo.set_hover_menu_item_state(name))
+            dpg.add_item_active_handler(callback=lambda: AppInfo.set_active_menu_item_state(name))
+            dpg.add_item_active_handler(callback=callback)
+
+        dpg.add_mouse_move_handler(callback=lambda: AppInfo.set_default_menu_item_state(name), parent="global_handlers")
+
+        return handler_registry
+
+    def close_all_menus():
+        dpg.hide_item("file_menu_window")
+        dpg.hide_item("app_menu_window")

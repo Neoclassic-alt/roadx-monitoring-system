@@ -38,7 +38,6 @@ def open_objects(sender, app_data, user_data):
     dpg.configure_item("combo_of_objects", items=tuple(map(lambda x: x['url'], storage.opened_objects)), 
     default_value=storage.opened_objects[0]['url'])
     dpg.show_item("group_of_objects")
-    dpg.hide_item("hello_text")
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
         pv.open_cv(**storage.current_object)
@@ -68,7 +67,6 @@ def open_folder(sender, app_data):
     default_value=storage.opened_objects[0]['url'])
 
     dpg.show_item("group_of_objects")
-    dpg.hide_item("hello_text")
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
         pv.open_cv(**storage.current_object)
@@ -120,61 +118,6 @@ def save_all_files(sender, app_data):
         dpg.delete_item("main_image")
         dpg.delete_item("main_image_desk")
         dpg.hide_item("group_of_objects")
-
-    # Ждем завершения работы очереди
-    queue.join()
-
-    if dpg.get_value("show_report"):
-        AppInfo.conn = sqlite3.connect("threading.db")
-        AppInfo.cursor = AppInfo.conn.cursor()
-        AppInfo.cursor.execute("DELETE FROM threading")
-        AppInfo.conn.commit()
-        AppInfo.cursor.executemany("INSERT INTO threading VALUES (?, ?, ?, ?, ?, ?)", results)
-        AppInfo.conn.commit()
-
-        # достаём данные из базы данных
-        AppInfo.cursor.execute("SELECT duration, thread_number FROM threading")
-        AppInfo.durations = AppInfo.cursor.fetchall()
-        # диаграмма - это продолжительность времени обработки изображений
-        # цветом выделяются потоки
-        AppInfo.cursor.execute("SELECT start_time FROM threading ORDER BY start_time")
-        start_time = AppInfo.cursor.fetchone()[0]
-
-        AppInfo.cursor.execute("SELECT end_time FROM threading ORDER BY end_time DESC")
-        end_time = AppInfo.cursor.fetchone()[0]
-
-        AppInfo.cursor.execute("SELECT min(duration) as min_time, avg(duration) as \
-        avg_time, max(duration) as max_time FROM threading")
-        time_statistics = AppInfo.cursor.fetchone()
-
-        AppInfo.cursor.execute("SELECT COUNT(*), SUM(duration) as count_by_thread FROM threading GROUP BY thread_number")
-        count_of_thread = AppInfo.cursor.fetchall()
-
-        count_of_thread_text = ''
-        for i, count in enumerate(count_of_thread):
-            count_of_thread_text += f'Поток {i + 1} обработал {count[0]} изображений за {count[1] / 1000000000} с.\n'
-
-        dpg.show_item("report_of_processing")
-        dpg.set_value("time_of_processing", f"Время обработки изображений: {(end_time - start_time) / 1000000} мс, \
-min: {time_statistics[0] / 1000000} мс, avg: {round(time_statistics[1] / 1000000, 4)} мс, max: {time_statistics[2] / 1000000} мс")
-        dpg.set_value("count_of_images_processing", count_of_thread_text)
-
-# обработка базы данных
-#def show_plot():
-#    fig, ax = plt.subplots()
-#    x = np.arange(1, len(AppInfo.durations) + 1)
-#    colors_of_threads = [[226 / 255, 77 / 255, 122 / 255], [231 / 255, 1, 198 / 255], [1, 0.5, 43 / 255],
-#    [0, 0, 0], [90 / 255, 221 / 255, 53 / 255], [1, 193 / 255, 239 / 255], 
-#    [22 / 255, 60 / 255, 1], [85 / 255, 1, 219 / 255], [240 / 255, 1, 38 / 255]]
-#    color_of_durations = list(map(lambda v: colors_of_threads[v[1] - 1], AppInfo.durations))
-#    y = list(map(lambda v: v[0] / 1000000, AppInfo.durations))
-#    ax.bar(x, y, color = color_of_durations)
-#    ax.set_ylabel("Время обработки изображения, мс")
-#    ax.set_xlabel("Изображение (по порядку)")
-#    fig.set_figwidth(9)    #  ширина и
-#    fig.set_figheight(5)    #  высота "Figure"
-#    fig.tight_layout()
-#    plt.show()
 
 class FileSaver(Thread):
     def __init__(thread_number, queue, plugins, plugins_settings, common_info):
@@ -250,7 +193,6 @@ def close_object():
         dpg.hide_item("close_and_delete_temp_files")
         dpg.hide_item("main_image_child_window")
         storage.set_value(keys.CURRENT_OBJECT, None)
-        dpg.show_item("hello_text")
     
     if length > 1:
         index_of_elem = tuple(map(lambda x: x['url'], storage.opened_objects)) \

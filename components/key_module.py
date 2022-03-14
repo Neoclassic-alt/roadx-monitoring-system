@@ -39,22 +39,14 @@ class USBKey:
     # после загрузки ограничим функциональность
     def try_limit(self):
         if not self.check_key():
-            #self.write_in_journal(records.flash_did_not_connect)
             self.limit()
         else:
-            #self.write_in_journal(records.flash_is_connect)
-            #self.write_in_journal(records.program_has_activated)
-            #self.demo = False
             storage.set_value(keys.DEMO, False)
 
     # ограничить функции программы
     def limit(self):
-        dpg.disable_item("upload_images_from_internet")
-        dpg.disable_item("open_from_internet_button")
-        dpg.show_item("demo_menu_item")
-        dpg.set_viewport_title("Computer Vision Experiments (DEMO)")
-        #self.write_in_journal(records.functional_has_limited)
-        #self.demo = True
+        #dpg.disable_item("open_from_internet_button")
+        dpg.set_viewport_title("RoadX Watching System (DEMO)")
         storage.set_value(keys.DEMO, True)
 
     # разблокировать программу
@@ -62,9 +54,7 @@ class USBKey:
         dpg.enable_item("upload_images_from_internet")
         dpg.enable_item("open_from_internet_button")
         dpg.hide_item("demo_menu_item")
-        dpg.set_viewport_title("Computer Vision Experiments")
-        #self.write_in_journal(records.program_has_activated)
-        #self.demo = False
+        dpg.set_viewport_title("RoadX Watching System")
         storage.set_value(keys.DEMO, False)
 
     def connect(self):
