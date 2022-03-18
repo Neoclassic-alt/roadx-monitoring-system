@@ -1,3 +1,4 @@
+from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
 from components.functions import AppInfo as app_info
@@ -93,8 +94,6 @@ with dpg.font_registry():
 
 with dpg.texture_registry(tag="texture_registry"):
     dpg.add_raw_texture(2000, 2000, storage.current_data, format=dpg.mvFormat_Float_rgba, tag="main_image")
-    app_info.add_static_texture(r"assets/images/plus-24.png", "plus_img")
-    app_info.add_static_texture(r"assets/images/minus-24.png", "minus_img")
     app_info.add_static_texture(r"assets/images/crosshair-three.png", "crosshair_img")
     app_info.add_static_texture(r"assets/images/app-icon-128x128.png", "app_splash")
     app_info.add_static_texture(r"assets/images/app-icon-32x32.png", "app_logo")
@@ -111,19 +110,23 @@ with dpg.texture_registry(tag="texture_registry"):
     app_info.add_static_texture(r"assets/new-icons/prev-file-o.png", "prev_file")
     app_info.add_static_texture(r"assets/new-icons/more-files-o.png", "more_files")
     app_info.add_static_texture(r"assets/new-icons/image-close.png", "close_image")
+    app_info.add_static_texture(r"assets/new-icons/image-close-inactive.png", "close_image_inactive")
     app_info.add_static_texture(r"assets/new-icons/zoom-minus-inactive.png", "zoom_minus_inactive")
     app_info.add_static_texture(r"assets/new-icons/zoom-plus-inactive.png", "zoom_plus_inactive")
     app_info.add_static_texture(r"assets/new-icons/zoom-minus-o.png", "zoom_minus")
     app_info.add_static_texture(r"assets/new-icons/zoom-plus-o.png", "zoom_plus")
     app_info.add_static_texture(r"assets/new-icons/expand.png", "expand")
     app_info.add_static_texture(r"assets/new-icons/demo-badge.png", "demo_badge")
+    app_info.add_static_texture(r"assets/new-icons/next-file-inactive.png", "next_file_inactive")
+    app_info.add_static_texture(r"assets/new-icons/prev-file-inactive.png", "prev_file_inactive")
+    app_info.add_static_texture(r"assets/new-icons/more-files-inactive.png", "more_files_inactive")
 
 with dpg.handler_registry(tag="global_handlers"):
     dpg.add_mouse_release_handler(callback=pm.undragging)
     dpg.add_key_press_handler(78, callback=lambda: dpg.show_item("settings_of_the_program"))
     dpg.add_key_press_handler(65, callback=pm.apply_chain)
     dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
-    dpg.add_mouse_click_handler(callback=app_info.close_all_menus)
+    dpg.add_mouse_release_handler(callback=app_info.close_all_menus)
 
 with dpg.item_handler_registry(tag="image_handler_registry"):
     dpg.add_item_hover_handler(callback=pm.get_mouse_pos)
@@ -192,7 +195,7 @@ with dpg.window(label="Добавить URL", show=False, width=600, height=400,
 
 # диалоговое окно открытия файлов
 with dpg.file_dialog(label="Открыть объекты", callback=fo.open_objects, directory_selector=False,
-show=False, tag="pc_file_dialog", user_data=OBJECT_TYPES.file, default_path="E:/opencv", width=800, height=600):
+show=False, tag="pc_file_dialog", user_data=OBJECT_TYPES.file, default_path="D:", width=800, height=600):
     dpg.add_file_extension("Все объекты (*.jpg *.jpeg *.png *.gif *.avi *.mp4 *.ogv *.mov) \
     {.jpg,.jpeg,.png,.gif,.avi,.mp4,.ogv,.mov}")
     dpg.add_file_extension("Изображения (*.jpg *.jpeg *.png *.gif){.jpg,.jpeg,.png,.gif}")
@@ -269,10 +272,10 @@ with dpg.window(tag="objects_window"):
         with dpg.child_window(label="Информация", tag="information_button", height=32, width=124):
             dpg.add_spacer(height=2)
             with dpg.group(horizontal=True, horizontal_spacing=1):
-                dpg.add_text("Информация")
-                dpg.add_image("red_point")
+                dpg.add_text("Информация", color=(194, 194, 194))
+                dpg.add_image("red_point", show=False, tag="red_point_image")
         dpg.bind_item_theme("information_button", themes.default_button_theme())
-        dpg.bind_item_handler_registry("information_button", information_button_registry)
+        #dpg.bind_item_handler_registry("information_button", information_button_registry)
         dpg.add_spacer(width=10)
 
         with dpg.child_window(label="Добавить файлы", tag="add_file_buttons", height=32, width=128):
@@ -281,57 +284,45 @@ with dpg.window(tag="objects_window"):
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
                 dpg.add_image_button("add_folder")
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_from_internet_inactive")
+                dpg.add_image_button("add_from_internet_inactive", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_video_inactive")
+                dpg.add_image_button("add_video_inactive", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
         dpg.bind_item_theme("add_file_buttons", themes.group_buttons_theme())
         dpg.add_spacer(width=10)
 
         with dpg.child_window(label="Переключить файлы", tag="manipulate_file_buttons", height=32, width=96):
             with dpg.group(horizontal=True, horizontal_spacing=0):
-                dpg.add_image_button("prev_file")
+                dpg.add_image_button("prev_file_inactive", tag="prev_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
-                dpg.add_image_button("more_files")
+                dpg.add_image_button("more_files_inactive", tag="more_files_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
-                dpg.add_image_button("next_file")
+                dpg.add_image_button("next_file_inactive", tag="next_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
         dpg.bind_item_theme("manipulate_file_buttons", themes.group_buttons_theme())
 
         dpg.add_spacer(width=10)
-        dpg.add_image_button("close_image", tag="close_files_button")
+        dpg.add_image_button("close_image_inactive", tag="close_files_button", enabled=False)
+        dpg.bind_item_theme("close_files_button", themes.close_button_theme())
         dpg.add_spacer(width=10)
-        dpg.add_child_window(height=32, width=-270)
+        dpg.add_child_window(height=32, width=-128)
         dpg.bind_item_theme(dpg.last_item(), themes.white_background())
-        with dpg.child_window(label="Переключить режим", tag="change_mode", height=32, width=130):
-            dpg.add_spacer(height=1)
-            with dpg.group(horizontal=True, horizontal_spacing=8):
-                dpg.add_spacer(width=8)
-                dpg.add_text("1", color=(64, 149, 227))
-                with dpg.group():
-                    dpg.add_color_button((237, 245, 252), width=1, height=2)
-                    dpg.bind_item_theme(dpg.last_item(), themes.null_itemspacing())
-                    dpg.add_slider_int(min_value=0, default_value=0, max_value=1, no_input=True, 
-                    clamped=True, width=32, tag="change_mode_slider", format="")
-                dpg.bind_item_theme(dpg.last_item(), themes.thin_slider())
-                dpg.bind_item_font("change_mode_slider", "mini_font")
-                dpg.add_text("All", color=(64, 149, 227))
-                dpg.add_image("help_img")
-        dpg.bind_item_theme("change_mode", themes.group_buttons_theme())
         dpg.add_spacer(width=10)
 
-        with dpg.child_window(label="Изменить размер изображения", tag="zoom", height=32, width=109):
+        with dpg.child_window(label="Изменить размер изображения", tag="zoom", height=32, width=109, show=False):
             with dpg.group(horizontal=True, horizontal_spacing=0):
-                dpg.add_image_button("zoom_plus")
+                dpg.add_image_button("zoom_plus", callback=lambda: pv.zoom("plus"), tag="plus_zoom_button")
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
-                dpg.add_image_button("zoom_minus")
+                dpg.add_image_button("zoom_minus", callback=lambda: pv.zoom("minus"), tag="minus_zoom_button")
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
-                dpg.add_button(label="100%")
+                dpg.add_button(label="100%", callback=lambda: pv.zoom("100"), tag="100_zoom_button")
                 dpg.bind_item_theme(dpg.last_item(), themes.zoom_ind_theme())
         dpg.bind_item_theme("zoom", themes.group_buttons_theme())
 
     with dpg.group(show=False, tag="group_of_objects"):
-        pass
+        dpg.add_text("В демо-версии можно загружать ролики не длиннее 1 минуты!", tag="limit_1_minute", color=(249, 80, 80), indent=20)
+        with dpg.child_window(horizontal_scrollbar=True, tag="main_image_child_window", show=False):
+            dpg.add_image("main_image", tag="main_image_desk")
 
     with dpg.child_window(tag="hello_splash", height=-32):
         dpg.add_spacer(height=160, tag="vertical_splash_spacer")
@@ -356,16 +347,25 @@ with dpg.window(tag="objects_window"):
     ### Строка с информацией (или с загрузкой)
     with dpg.child_window(tag="status_bar", height=28):
         dpg.add_spacer()
-        dpg.add_text("Кадр: 350/367  ·  1280x720 (HD)  ·  30 кадров в секунду  ·  Скорость чтения: N/A  ·  Вес временных файлов: 723 Мб  ·  Всего плагинов: 5 ", indent=20)
+        dpg.add_text("", indent=20, tag="status_bar_info")
+        with dpg.group(show=False, tag="state_of_loading", horizontal=True):
+            dpg.add_loading_indicator(speed=2, style=1, radius=1, tag="loading_indicator")
+            dpg.add_text("Загрузка плагина...", tag="text_of_loading")
+            dpg.add_progress_bar(tag="progress_bar", width=300, show=False)
+            dpg.add_text("0:00", tag="time_from_begin")
+            dpg.add_text(" / ")
+            dpg.add_text("Оценивается...", tag="possible_time_ending")
 
 ### Раскрывающиеся окна "Файл" и "Приложение"
 with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no_move=True, 
-no_resize=True, tag="file_menu_window", width=293, height=380):
-    with dpg.child_window(width=291, height=378, tag="file_menu"):
+no_resize=True, tag="file_menu_window", width=293, height=388):
+    with dpg.child_window(width=291, height=386, tag="file_menu"):
         dpg.add_spacer(height=5)
 
-custom_components.menu_item("Открыть файл", "file_menu", shortcut="Ctrl + O", spacer_width=77, width=300, tag="open_file_menu_item")
-custom_components.menu_item("Открыть папку", "file_menu", shortcut="Ctrl + F", spacer_width=75, width=300, tag="open_folder_menu_item")
+custom_components.menu_item("Открыть файл", "file_menu", shortcut="Ctrl + O", spacer_width=77, 
+width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
+custom_components.menu_item("Открыть папку", "file_menu", shortcut="Ctrl + F", spacer_width=75, 
+width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
 custom_components.menu_item("Загрузить из интернета", "file_menu", width=300,
 tag="download_from_internet_menu_item", disabled=True, demo=True)
 custom_components.menu_item("Подключиться к IP-камере", "file_menu", width=300,
@@ -383,7 +383,7 @@ dpg.add_color_button((228, 228, 228), indent=20, parent="file_menu", width=253, 
 custom_components.menu_item("Закрыть", "file_menu", spacer_width=123, shortcut="Ctrl + C",
 tag="close_menu_item", disabled=True, width=300)
 custom_components.menu_item("Закрыть всё", "file_menu", spacer_width=48, shortcut="Ctrl + Shift + C",
-tag="close_all_images_menu_item", disabled=True, width=300)
+tag="close_all_menu_item", disabled=True, width=300)
 
 dpg.bind_item_theme("file_menu_window", themes.window_shadow())
 
@@ -470,7 +470,6 @@ width=310, pos=(300, 200)):
 dpg.add_window(label="График плагина", show=False, autosize=True, no_resize=True, tag="plugin_window")
 
 dpg.bind_theme(themes.get_theme())
-dpg.bind_item_theme("close_files_button", themes.close_button_theme())
 dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 
 dpg.show_style_editor()
@@ -479,6 +478,7 @@ dpg.show_style_editor()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
 dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
+dpg.set_viewport_resize_callback(callback=app_info.resize_image_window)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")
 dpg.set_viewport_large_icon("assets/images/app.ico")

@@ -7,8 +7,9 @@ class storage:
     plugins_titles_to_names = {}
     plugins_settings = None # установленные настройки плагинов
     plugins_prior_settings = None # предварительные настройки плагинов
-    opened_objects = [] # открытые объекты и плагины к ним (изображения, URLs)
-    # с 24.12.2021 только объекты
+    process_mode = "all" # режим обработки, подробнее в классе PROCESS_MODES
+    process_actual_again = False # нужно ли обрабатывать повторно актуальные файлы
+    opened_objects = [] # с 24.12.2021 только объекты (url, type, status [new, actual, in_process, irrelevant])
     current_object = None # текущий открытый объект
     chain_of_plugins = [] # цепочка плагинов
     current_file_field_tag = {'item': None, 'var': None} # для сохранения имени файлового поля
@@ -19,7 +20,6 @@ class storage:
     demo = True # если True, то функциональность ограничена
     is_dragging = False # перетаскивание методом Drag&Drop
     zoom = 100 # степень увеличения/уменьшения
-    processed = False # для определения, был ли уже обработано изображение/файл
     crosshair = [False, None, None] # объект перекрестия. [0] - включен ли режим; [1] - кнопка; [2] - переменная плагина
 
     ### ДЛЯ ВИДЕО ###
@@ -247,3 +247,16 @@ class keys:
     ZOOM = "zoom"
     PROCESSED = "processed"
     CROSSHAIR = "crosshair"
+
+class OBJECT_STATUSES:
+    new = "new"
+    actual = "actual"
+    in_process = "in_process"
+    irrelevant = "irrelevant"
+
+class PROCESS_MODES:
+    one = "one"
+    several = "several"
+    new = "new"
+    earlier = "earlier"
+    all_files = "all"

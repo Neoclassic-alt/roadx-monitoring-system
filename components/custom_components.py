@@ -24,3 +24,12 @@ spacer_width=0, disabled=False, demo=False, width=255):
     if not disabled:
         open_file_menu_item_registry = app_info.buttonize_menu_item(tag, callback)
         dpg.bind_item_handler_registry(tag, open_file_menu_item_registry)
+
+def enable_menu_item(tag, callback=None):
+    open_file_menu_item_registry = app_info.buttonize_menu_item(tag, callback)
+    dpg.bind_item_handler_registry(tag, open_file_menu_item_registry)
+    dpg.configure_item(dpg.get_item_children(dpg.get_item_children(tag, slot=1)[1], slot=1)[1], color=(51, 51, 51))
+
+def disable_menu_item(tag):
+    dpg.configure_item(dpg.get_item_children(dpg.get_item_children(tag, slot=1)[1], slot=1)[1], color=(194, 194, 194))
+    dpg.bind_item_handler_registry(tag, "none_handler")

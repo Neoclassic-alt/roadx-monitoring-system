@@ -205,6 +205,13 @@ def blue_button_square_theme():
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (237, 245, 252), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (221, 236, 249), category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
+
+    with dpg.theme_component(dpg.mvImageButton, parent=theme, enabled_state=False):
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 0, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
     return theme
 
 def green_button_square_theme():
@@ -214,6 +221,12 @@ def green_button_square_theme():
         dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (242, 251, 222), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (227, 242, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvImageButton, parent=theme, enabled_state=False):
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 0, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
     return theme
 
@@ -234,6 +247,10 @@ def close_button_theme():
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 4, category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (252, 237, 237), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 205, 205), category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvImageButton, parent=theme, enabled_state=False):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
     return theme
 
 def thin_slider():

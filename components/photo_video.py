@@ -3,14 +3,15 @@ import cv2
 import numpy as np
 from components.storage import storage
 from components.storage import keys
+import components.plugin_manager as pm
+import components.file_operations as fo
+from components.functions import AppInfo as app_info
+import components.custom_components as custom_components
 import zlib
 import os
 import shutil
 import requests
-import components.plugin_manager as pm
-import components.file_operations as fo
 import beepy
-from components.functions import AppInfo as app_info
 import time
 
 TEMP_FRAMES_FOLDER = r"C:/ProgramData/cv_experiments/temp_frames"
@@ -96,11 +97,11 @@ def process_image(data, single_image=True, index=None):
     return data
 
 # открыть новые объекты при помощи OpenCV
-def open_cv(url, type):
+def open_cv(url, type, status):
     data = None
     dpg.hide_item("limit_1_minute")
     storage.clear_additional_data()
-    storage.set_value(keys.PROCESSED, False)
+    #storage.set_value(keys.PROCESSED, False)
     if type == OBJECT_TYPES.image:
         data = cv2.imread(url)
     if type == OBJECT_TYPES.url:
@@ -112,16 +113,14 @@ def open_cv(url, type):
         if len(storage.chain_of_plugins) > 0:
             data = process_image(data)
         change_texture(data)
-        dpg.delete_item("additional_text_group", children_only=True)
+        #dpg.delete_item("additional_text_group", children_only=True)
         dpg.hide_item("state_of_loading")
-        dpg.hide_item("video_player")
-        dpg.hide_item("close_and_delete_temp_files")
-        dpg.enable_item("save_one_image_menu_item")
-        dpg.enable_item("save_all_images_menu_item")
-        dpg.disable_item("save_one_frame_menu_item")
-        dpg.disable_item("save_all_frames_menu_item")
-        #dpg.hide_item("third_spacer")
-        show_additional_data()
+        dpg.show_item("status_bar_info")
+        #dpg.hide_item("video_player")
+        #dpg.hide_item("close_and_delete_temp_files")
+        custom_components.enable_menu_item("save_image_menu_item")
+        custom_components.enable_menu_item("save_all_images_menu_item")
+        #show_additional_data()
     if type in OBJECT_TYPES.video:
         # CRC-код будет именем папки с временными файлами
         temp_folder_name = zlib.crc32(url.encode('utf-8'), 0)
@@ -132,6 +131,7 @@ def open_cv(url, type):
         if (length_of_video / frame_rate) > 60 and storage.demo:
             dpg.show_item("limit_1_minute")
             dpg.hide_item("state_of_loading")
+            dpg.show_item("status_bar_info")
             return
         storage.set_value(keys.FRAME_RATE, frame_rate)
         temp_frames_folder = r"C:/ProgramData/cv_experiments/temp_frames"
@@ -140,6 +140,7 @@ def open_cv(url, type):
         temp_folder_path = rf"{temp_frames_folder}/{temp_folder_name}"
         if not os.path.isdir(temp_folder_path):
             dpg.show_item("state_of_loading")
+            dpg.hide_item("loading_indicator")
             dpg.show_item("progress_bar")
             os.mkdir(temp_folder_path)
 
@@ -167,16 +168,16 @@ def open_cv(url, type):
 
         dpg.hide_item("state_of_loading")
         dpg.hide_item("progress_bar")
-        dpg.show_item("video_player")
-        dpg.show_item("close_and_delete_temp_files")
-        dpg.disable_item("save_one_image_menu_item")
-        dpg.disable_item("save_all_images_menu_item")
-        dpg.enable_item("save_one_frame_menu_item")
-        dpg.enable_item("save_all_frames_menu_item")
-        #dpg.show_item("third_spacer")
+        #dpg.show_item("video_player")
+        #dpg.show_item("close_and_delete_temp_files")
+        custom_components.enable_menu_item("save_image_menu_item")
+        custom_components.enable_menu_item("save_all_frames_menu_item")
+        custom_components.enable_menu_item("save_video_menu_item")
     dpg.show_item("main_image_child_window")
-    dpg.enable_item("close_object_menu_item")
-    dpg.enable_item("close_all_objects_menu_item")
+    custom_components.enable_menu_item("close_menu_item")
+    custom_components.enable_menu_item("close_all_menu_item")
+    app_info.update_status_bar_info()
+    app_info.update_viewport_title()
 
 # загрузить изображение с Интернета
 def get_image_from_url(url):
@@ -326,7 +327,6 @@ def change_texture(data):
     data = cv2.cvtColor(data, cv2.COLOR_BGR2RGBA)
     data = data.flatten() / 255
     data = np.asarray(data, np.float32)
-    dpg.configure_item("main_image_child_window", height=shape[0]+16)
 
     dpg.delete_item("main_image_desk") # удаление изображения
     dpg.delete_item("main_image") # удаление текстуры
@@ -344,26 +344,27 @@ def zoom(direction):
     index = values.index(storage.zoom)
     if direction == "plus":
         dpg.enable_item("minus_zoom_button")
+        dpg.configure_item("minus_zoom_button", texture_tag="zoom_minus")
         if index != len(values):
             storage.set_value(keys.ZOOM, values[index+1])
         if index == len(values) - 2:
             dpg.disable_item("plus_zoom_button")
+            dpg.configure_item("plus_zoom_button", texture_tag="zoom_plus_inactive")
     if direction == "minus":
         dpg.enable_item("plus_zoom_button")
+        dpg.configure_item("plus_zoom_button", texture_tag="zoom_plus")
         if index != 0:
             storage.set_value(keys.ZOOM, values[index-1])
         if index == 1:
             dpg.disable_item("minus_zoom_button")
+            dpg.configure_item("minus_zoom_button", texture_tag="zoom_minus_inactive")
     if direction == "100":
         dpg.enable_item("plus_zoom_button")
+        dpg.configure_item("plus_zoom_button", texture_tag="zoom_plus")
         dpg.enable_item("minus_zoom_button")
+        dpg.configure_item("minus_zoom_button", texture_tag="zoom_minus")
         storage.set_value(keys.ZOOM, 100)
-    if storage.zoom != 100:
-        dpg.show_item("100_zoom_button")
-    else:
-        dpg.hide_item("100_zoom_button")
     width = dpg.get_item_width("main_image")
     height = dpg.get_item_height("main_image")
     dpg.configure_item("main_image_desk", width=width*storage.zoom//100, height=height*storage.zoom//100)
-    dpg.set_item_height("main_image_child_window", height*storage.zoom//100+16)
-    dpg.set_value("zoom_text", f"{storage.zoom}%")
+    dpg.configure_item("100_zoom_button", label=f"{storage.zoom}%")

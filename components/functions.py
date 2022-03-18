@@ -1,9 +1,8 @@
 import dearpygui.dearpygui as dpg
-from components.storage import storage
-from components.storage import keys
+from components.storage import storage, keys
 import pyperclip as clipboard
-import sys
 import components.styling as themes
+import os
 
 class AppInfo:
     def change_video_texture(shape):
@@ -25,6 +24,7 @@ class AppInfo:
                 dpg.add_font_range(0x2190, 0x219e)
                 dpg.add_font_range(0x2100, 0x214f)
                 dpg.add_font_range(0x2010, 0x2015)
+                dpg.add_font_chars([0x00D7])
         else:
             with dpg.font(url, size):
                 dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
@@ -88,10 +88,6 @@ class AppInfo:
             y_series[i*AVG+4] = median
 
         return y_series
-
-    def save_init():
-        dpg.save_init_file("C:/ProgramData/cv_experiments/dpg.ini")
-        sys.exit()
 
     def create_plots():
         for plugin_title, video_data in storage.video_data.items():
@@ -260,5 +256,32 @@ class AppInfo:
         return handler_registry
 
     def close_all_menus():
-        dpg.hide_item("file_menu_window")
-        dpg.hide_item("app_menu_window")
+        if not dpg.get_item_state("file_button")["hovered"]:
+            dpg.hide_item("file_menu_window")
+        if not dpg.get_item_state("app_button")["hovered"]:
+            dpg.hide_item("app_menu_window")
+
+    def update_viewport_title():
+        demo = ""
+        filename = ""
+        if storage.demo:
+            demo = " (DEMO)"
+        if not storage.current_object is None:
+            filename = f": {storage.current_object['url']}"
+        dpg.set_viewport_title("RoadX Monitoring System" + demo + filename)
+
+    def resize_image_window():
+        dpg.configure_item("main_image_child_window", height=dpg.get_viewport_client_height() - 80, width=dpg.get_viewport_client_width())
+
+    def update_status_bar_info():
+        current_file = storage.current_object["url"]
+        file_size = os.path.getsize(current_file) / 1024
+        width = dpg.get_item_configuration("main_image")["width"]
+        height = dpg.get_item_configuration("main_image")["height"]
+
+        if file_size >= 1024:
+            file_size = str(round(file_size / 1024, 2)) + " МБ"
+        else:
+            file_size = str(round(file_size, 2)) + " КБ"
+
+        dpg.set_value("status_bar_info", f"Разрешение: {width}×{height}, размер: {file_size}")
