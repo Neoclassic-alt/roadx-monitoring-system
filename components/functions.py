@@ -270,9 +270,6 @@ class AppInfo:
             filename = f": {storage.current_object['url']}"
         dpg.set_viewport_title("RoadX Monitoring System" + demo + filename)
 
-    def resize_image_window():
-        dpg.configure_item("main_image_child_window", height=dpg.get_viewport_client_height() - 80, width=dpg.get_viewport_client_width())
-
     def update_status_bar_info():
         current_file = storage.current_object["url"]
         file_size = os.path.getsize(current_file) / 1024
@@ -285,3 +282,33 @@ class AppInfo:
             file_size = str(round(file_size, 2)) + " КБ"
 
         dpg.set_value("status_bar_info", f"Разрешение: {width}×{height}, размер: {file_size}")
+
+    def resize_viewport():
+        dpg.configure_item("main_image_child_window", height=dpg.get_viewport_client_height() - 80, width=dpg.get_viewport_client_width())
+        minus_width = 0
+        minus_height = 0
+        if dpg.get_item_height("main_image_desk") > dpg.get_viewport_client_height():
+            minus_width = 16
+        if dpg.get_item_width("main_image_desk") > dpg.get_viewport_client_width():
+            minus_height = 22
+        dpg.set_item_pos("video_player_window", (0, dpg.get_viewport_client_height() - 128 - minus_height))
+        dpg.set_item_width("video_player_window", dpg.get_viewport_client_width() - minus_width)
+        dpg.set_item_width("player_pan", dpg.get_viewport_client_width() - 188 - minus_width)
+        dpg.set_item_indent("player_buttons", (dpg.get_viewport_client_width() / 2 - minus_width) - 108)
+
+    def convert_to_index():
+        return round(dpg.get_mouse_pos()[0] / dpg.get_item_width("player_pan") * storage.total_frames)
+
+    def apply_opacity_to_video_player(opacity):
+        dpg.bind_item_theme("lock_button", themes.lock_button(opacity))
+        dpg.bind_item_theme("player_pan", themes.player_pan(opacity))
+        dpg.bind_item_theme("player_progress", themes.player_progress(opacity))
+        dpg.bind_item_theme("video_player_window", themes.player_window(opacity))
+        dpg.configure_item("skip_backward_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("prev_frame_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("play_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("next_frame_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("skip_forward_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("lock_button", tint_color=(255, 255, 255, opacity))
+        dpg.configure_item("time_video_from_begin", color=(255, 255, 255, opacity))
+        dpg.configure_item("video_duration", color=(255, 255, 255, opacity))

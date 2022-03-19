@@ -38,6 +38,8 @@ class storage:
 
     actions = []
 
+    video_timer = 0 # отсчитывает время с момента движения мыши
+
     def write_action(func):
         def wrapper(*args):
             func(*args)
@@ -92,6 +94,8 @@ class storage:
             storage.processed = value
         if key == keys.CROSSHAIR:
             storage.crosshair = value
+        if key == keys.VIDEO_TIMER:
+            storage.video_timer = value
 
     @write_action
     def set_plugin_settings(key, value):
@@ -214,6 +218,12 @@ class storage:
         del storage.plugins_settings[name]
         del storage.plugins_prior_settings[name]
 
+    def add_to_video_timer(value):
+        storage.video_timer += value
+
+    def reset_video_timer():
+        storage.video_timer = 0
+
 class OBJECT_TYPES:
     image = "image"
     video = "video"
@@ -247,6 +257,7 @@ class keys:
     ZOOM = "zoom"
     PROCESSED = "processed"
     CROSSHAIR = "crosshair"
+    VIDEO_TIMER = "video_timer"
 
 class OBJECT_STATUSES:
     new = "new"

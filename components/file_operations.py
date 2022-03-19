@@ -33,10 +33,15 @@ def open_objects(sender, app_data, user_data):
             #    opened_objects.append({'url': url, 'type': functions.OBJECT_TYPES.stream, 'plugin': plugin})
         dpg.hide_item("add_urls_window")
         dpg.set_value("urls", "")
-        dpg.set_value("apply_urls_plugin", "(Нет)")
+        dpg.set_value("apply_urls_plugin", "(Нет)")   
+ 
+    if storage.current_object is None:
+        storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
+        pv.open_cv(**storage.current_object) # <- вот функция, где мы должны пойти дальше
+
+    dpg.hide_item("hello_splash")
     dpg.show_item("group_of_objects")
     dpg.show_item("zoom")
-    dpg.hide_item("hello_splash")
     dpg.enable_item("prev_file_button")
     dpg.configure_item("prev_file_button", texture_tag="prev_file")
     dpg.enable_item("more_files_button")
@@ -45,10 +50,6 @@ def open_objects(sender, app_data, user_data):
     dpg.configure_item("next_file_button", texture_tag="next_file")
     dpg.enable_item("close_files_button")
     dpg.configure_item("close_files_button", texture_tag="close_image")
-    
-    if storage.current_object is None:
-        storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
-        pv.open_cv(**storage.current_object) # <- вот функция, где мы должны пойти дальше
 
 # открыть папку с файлами
 def open_folder(sender, app_data):

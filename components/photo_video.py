@@ -32,20 +32,16 @@ class FILE_FORMATS:
 # действия при нажатии кнопки play
 def toggle_play():
     if storage.is_playing:
-        dpg.configure_item("play_button", texture_tag="play_img")
-        dpg.hide_item("speed_frames_text")
+        dpg.configure_item("play_button", texture_tag="play")
     else:
-        dpg.configure_item("play_button", texture_tag="pause_img")
-        dpg.show_item("speed_frames_text")
+        dpg.configure_item("play_button", texture_tag="pause")
     storage.toggle_playing()
 
 def set_play(state):
     if state:
-        dpg.configure_item("play_button", texture_tag="pause_img")
-        dpg.show_item("speed_frames_text")
+        dpg.configure_item("play_button", texture_tag="pause")
     else:
-        dpg.configure_item("play_button", texture_tag="play_img")
-        dpg.hide_item("speed_frames_text")
+        dpg.configure_item("play_button", texture_tag="play")
     storage.set_value(keys.IS_PLAYING, state)
 
 def get_temp_folder_name(url):
@@ -116,8 +112,8 @@ def open_cv(url, type, status):
         #dpg.delete_item("additional_text_group", children_only=True)
         dpg.hide_item("state_of_loading")
         dpg.show_item("status_bar_info")
-        #dpg.hide_item("video_player")
-        #dpg.hide_item("close_and_delete_temp_files")
+        dpg.hide_item("video_player_window")
+        dpg.hide_item("close_and_delete_temp_files")
         custom_components.enable_menu_item("save_image_menu_item")
         custom_components.enable_menu_item("save_all_images_menu_item")
         #show_additional_data()
@@ -162,14 +158,19 @@ def open_cv(url, type, status):
 
         count_of_frames = len(os.listdir(temp_folder_path))
         storage.set_value(keys.TOTAL_FRAMES, count_of_frames)
-        dpg.configure_item("video_slider", format=f"%d/{storage.total_frames - 1}", max_value=storage.total_frames - 1)
+        dpg.set_value("time_video_from_begin", "0:00")
+        seconds = storage.total_frames // storage.frame_rate
+        minutes = seconds // 60
+        seconds = seconds % 60
+        dpg.set_value("video_duration", "{0:02d}:{1:02d}".format(minutes, seconds))
         data = cv2.imread(f"{temp_folder_path}/{storage.current_frame}.jpg")
         change_texture(data)
+        app_info.resize_viewport()
 
         dpg.hide_item("state_of_loading")
         dpg.hide_item("progress_bar")
-        #dpg.show_item("video_player")
-        #dpg.show_item("close_and_delete_temp_files")
+        dpg.show_item("video_player_window")
+        dpg.show_item("close_and_delete_temp_files")
         custom_components.enable_menu_item("save_image_menu_item")
         custom_components.enable_menu_item("save_all_frames_menu_item")
         custom_components.enable_menu_item("save_video_menu_item")
@@ -206,12 +207,16 @@ def show_additional_data(frame_index=0):
 def open_frame(frame_index):
     url = storage.current_object["url"]
     storage.set_value(keys.CURRENT_FRAME, frame_index)
-    dpg.set_value("video_slider", frame_index)
+    dpg.set_item_width("player_progress", frame_index / (storage.total_frames - 1) * dpg.get_item_width("player_pan"))
+    if frame_index == 0:
+        dpg.hide_item("player_progress")
+    else:
+        dpg.show_item("player_progress")
 
     temp_folder_name = get_temp_folder_name(url)
     temp_frames_folder = TEMP_FRAMES_FOLDER
-    if len(storage.chain_of_plugins) and dpg.get_value("apply_to_all_frames") and storage.processed:
-        temp_frames_folder = TEMP_PROCESSING_FRAMES_FOLDER
+    #if len(storage.chain_of_plugins) and dpg.get_value("apply_to_all_frames") and storage.processed:
+    #    temp_frames_folder = TEMP_PROCESSING_FRAMES_FOLDER
     temp_folder_path = rf"{temp_frames_folder}/{temp_folder_name}"
 
     if frame_index == storage.total_frames - 1:
@@ -219,22 +224,22 @@ def open_frame(frame_index):
 
     data = cv2.imread(f"{temp_folder_path}/{storage.current_frame}.jpg")
 
-    if not dpg.get_value("apply_to_all_frames"):
-        storage.clear_additional_data()
-    dpg.delete_item("additional_text_group", children_only=True)
+    #if not dpg.get_value("apply_to_all_frames"):
+    #    storage.clear_additional_data()
+    #dpg.delete_item("additional_text_group", children_only=True)
 
-    if len(storage.chain_of_plugins) and not dpg.get_value("apply_to_all_frames"):
-        data = process_image(data)
-        dpg.hide_item("state_of_loading")
+    #if len(storage.chain_of_plugins) and not dpg.get_value("apply_to_all_frames"):
+    #    data = process_image(data)
+    #    dpg.hide_item("state_of_loading")
 
-    if storage.is_playing:
-        dpg.hide_item("additional_text")
-    else:
-        dpg.configure_item("additional_text", label="Результаты обработки кадра при помощи плагинов")
-        if storage.program_settings["display_image_process"] and dpg.get_value("apply_to_all_frames"):
-            show_additional_data(frame_index)
-        if storage.program_settings["display_image_process"] and not dpg.get_value("apply_to_all_frames"):
-            show_additional_data()
+    #if storage.is_playing:
+    #    dpg.hide_item("additional_text")
+    #else:
+    #    dpg.configure_item("additional_text", label="Результаты обработки кадра при помощи плагинов")
+    #    if storage.program_settings["display_image_process"] and dpg.get_value("apply_to_all_frames"):
+    #        show_additional_data(frame_index)
+    #    if storage.program_settings["display_image_process"] and not dpg.get_value("apply_to_all_frames"):
+    #        show_additional_data()
         
     shape = data.shape
     data = cv2.cvtColor(data, cv2.COLOR_BGR2RGBA)
@@ -243,7 +248,7 @@ def open_frame(frame_index):
     seconds = storage.current_frame // storage.frame_rate
     minutes = seconds // 60
     seconds = seconds % 60
-    dpg.set_value("video_time", "{0:02d}:{1:02d}".format(minutes, seconds))
+    dpg.set_value("time_video_from_begin", "{0:02d}:{1:02d}".format(minutes, seconds))
 
 # обработать плагинами все кадры из видео
 def process_all_frames():

@@ -14,6 +14,7 @@ import pyperclip as clipboard
 import time
 import webbrowser
 import components.custom_components as custom_components
+import components.assets as assets
 
 # загрузка модулей
 storage.set_value(keys.PLUGINS, pm.load_plugins())
@@ -83,43 +84,14 @@ with dpg.font_registry():
         dpg.add_font_range(0x2010, 0x2015)
     app_info.load_font(r"assets\fonts\NotoSans-Bold.ttf", 24, tag="title")
     app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 18, tag="mini_font")
-    app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 16, tag="toggle_font")
     app_info.load_font(r"assets\fonts\OpenSans-Bold.ttf", 18)
     app_info.load_font(r"assets\fonts\OpenSans-Regular.ttf", 18)
     app_info.load_font(r"assets\fonts\TisaSansPro-Regular.ttf", 18)
     app_info.load_font(r"assets\fonts\Roboto-Regular.ttf", 18)
     app_info.load_font(r"assets\fonts\Roboto-Medium.ttf", 18)
     app_info.load_font(r"assets\fonts\TisaSansPro-Regular.ttf", 18)
-    app_info.load_font(r"assets\fonts\SourceSansPro-Regular.ttf", 20, tag="chain_of_plugins_font")
 
-with dpg.texture_registry(tag="texture_registry"):
-    dpg.add_raw_texture(2000, 2000, storage.current_data, format=dpg.mvFormat_Float_rgba, tag="main_image")
-    app_info.add_static_texture(r"assets/images/crosshair-three.png", "crosshair_img")
-    app_info.add_static_texture(r"assets/images/app-icon-128x128.png", "app_splash")
-    app_info.add_static_texture(r"assets/images/app-icon-32x32.png", "app_logo")
-    app_info.add_static_texture(r"assets/new-icons/help.png", "help_img")
-    app_info.add_static_texture(r"assets/new-icons/red-point.png", "red_point")
-    app_info.add_static_texture(r"assets/new-icons/add-image.png", "add_image")
-    app_info.add_static_texture(r"assets/new-icons/add-folder.png", "add_folder")
-    app_info.add_static_texture(r"assets/new-icons/globus-add.png", "add_from_internet")
-    app_info.add_static_texture(r"assets/new-icons/globus-add-inactive.png", "add_from_internet_inactive")
-    app_info.add_static_texture(r"assets/new-icons/add-video.png", "add_video")
-    app_info.add_static_texture(r"assets/new-icons/add-video-inactive.png", "add_video_inactive")
-    app_info.add_static_texture(r"assets/new-icons/image-actual.png", "image_actual")
-    app_info.add_static_texture(r"assets/new-icons/next-file-o.png", "next_file")
-    app_info.add_static_texture(r"assets/new-icons/prev-file-o.png", "prev_file")
-    app_info.add_static_texture(r"assets/new-icons/more-files-o.png", "more_files")
-    app_info.add_static_texture(r"assets/new-icons/image-close.png", "close_image")
-    app_info.add_static_texture(r"assets/new-icons/image-close-inactive.png", "close_image_inactive")
-    app_info.add_static_texture(r"assets/new-icons/zoom-minus-inactive.png", "zoom_minus_inactive")
-    app_info.add_static_texture(r"assets/new-icons/zoom-plus-inactive.png", "zoom_plus_inactive")
-    app_info.add_static_texture(r"assets/new-icons/zoom-minus-o.png", "zoom_minus")
-    app_info.add_static_texture(r"assets/new-icons/zoom-plus-o.png", "zoom_plus")
-    app_info.add_static_texture(r"assets/new-icons/expand.png", "expand")
-    app_info.add_static_texture(r"assets/new-icons/demo-badge.png", "demo_badge")
-    app_info.add_static_texture(r"assets/new-icons/next-file-inactive.png", "next_file_inactive")
-    app_info.add_static_texture(r"assets/new-icons/prev-file-inactive.png", "prev_file_inactive")
-    app_info.add_static_texture(r"assets/new-icons/more-files-inactive.png", "more_files_inactive")
+assets.get_assets()
 
 with dpg.handler_registry(tag="global_handlers"):
     dpg.add_mouse_release_handler(callback=pm.undragging)
@@ -127,6 +99,7 @@ with dpg.handler_registry(tag="global_handlers"):
     dpg.add_key_press_handler(65, callback=pm.apply_chain)
     dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
     dpg.add_mouse_release_handler(callback=app_info.close_all_menus)
+    dpg.add_mouse_move_handler(callback=lambda: storage.reset_video_timer())
 
 with dpg.item_handler_registry(tag="image_handler_registry"):
     dpg.add_item_hover_handler(callback=pm.get_mouse_pos)
@@ -137,6 +110,9 @@ lambda: dpg.show_item("file_menu_window") if not dpg.get_item_configuration("fil
 app_button_registry = app_info.buttonize("app_button", 
 lambda: dpg.show_item("app_menu_window") if not dpg.get_item_configuration("app_menu_window")['show'] else None)
 information_button_registry = app_info.buttonize("information_button", None)
+
+with dpg.item_handler_registry(tag="pan_handler_registry"):
+    dpg.add_item_active_handler(callback=lambda: pv.open_frame(app_info.convert_to_index()))
 
 dpg.add_item_handler_registry(tag="none_handler")
 
@@ -304,6 +280,8 @@ with dpg.window(tag="objects_window"):
         dpg.add_spacer(width=10)
         dpg.add_image_button("close_image_inactive", tag="close_files_button", enabled=False)
         dpg.bind_item_theme("close_files_button", themes.close_button_theme())
+        dpg.add_image_button("delete_temp_files", tag="close_and_delete_temp_files", enabled=False, show=False)
+        dpg.bind_item_theme("close_and_delete_temp_files", themes.close_button_theme())
         dpg.add_spacer(width=10)
         dpg.add_child_window(height=32, width=-128)
         dpg.bind_item_theme(dpg.last_item(), themes.white_background())
@@ -355,6 +333,33 @@ with dpg.window(tag="objects_window"):
             dpg.add_text("0:00", tag="time_from_begin")
             dpg.add_text(" / ")
             dpg.add_text("Оценивается...", tag="possible_time_ending")
+
+# Видеоплеер
+with dpg.window(label="Видеоплеер", pos=(350, 500), no_move=True, no_resize=True, no_scrollbar=True,
+no_title_bar=True, width=560, height=90, tag="video_player_window", user_data={"opacity": 0}, show=False):
+    dpg.add_spacer(height=10)
+    with dpg.group(horizontal=True, tag="player_buttons"):
+        dpg.add_image_button("skip_backward", tag="skip_backward_button", callback=pv.go_to_begin)
+        dpg.add_image_button("prev_frame", tag="prev_frame_button", callback=pv.go_to_prev_frame)
+        dpg.add_image_button("play", tag="play_button", callback=pv.toggle_play)
+        dpg.add_image_button("next_frame", tag="next_frame_button", callback=pv.go_to_next_frame)
+        dpg.add_image_button("skip_forward", tag="skip_forward_button", callback=pv.go_to_end)
+    with dpg.group(horizontal=True):
+        dpg.add_image_button("locked", tag="lock_button")
+        dpg.bind_item_theme("lock_button", themes.lock_button(255))
+        dpg.add_text("0:00", color=(255, 255, 255), tag="time_video_from_begin")
+        dpg.add_spacer()
+        with dpg.group():
+            dpg.add_spacer(height=8)
+            dpg.add_child_window(width=420, height=9, tag="player_pan")
+            dpg.bind_item_theme("player_pan", themes.player_pan(255))
+            dpg.bind_item_handler_registry("player_pan", "pan_handler_registry")
+        dpg.add_spacer()
+        dpg.add_text("0:00", color=(255, 255, 255), tag="video_duration")
+    dpg.add_child_window(width=1, height=9, tag="player_progress", pos=(98, 70))
+    dpg.bind_item_theme("player_progress", themes.player_progress(255))
+    dpg.bind_item_handler_registry("player_progress", "pan_handler_registry")
+dpg.bind_item_theme("video_player_window", themes.player_window(255))
 
 ### Раскрывающиеся окна "Файл" и "Приложение"
 with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no_move=True, 
@@ -478,7 +483,7 @@ dpg.show_style_editor()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
 dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
-dpg.set_viewport_resize_callback(callback=app_info.resize_image_window)
+dpg.set_viewport_resize_callback(callback=app_info.resize_viewport)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")
 dpg.set_viewport_large_icon("assets/images/app.ico")
@@ -496,18 +501,28 @@ while dpg.is_dearpygui_running():
         storage.next_current_frame()
         pv.open_frame(storage.current_frame)
         fps = round(1/dpg.get_delta_time(), 2)
-        if dpg.get_frame_count() % 20 == 0:
-            dpg.set_value("speed_frames_text", f"{fps} кадров/сек")
-            if fps >= storage.frame_rate:
-                dpg.hide_item("speed_frames_text")
-            if fps >= 24 and fps < storage.frame_rate:
-                dpg.show_item("speed_frames_text")
-                dpg.configure_item("speed_frames_text", color=(219, 179, 0))
-            if fps < 24:
-                dpg.show_item("speed_frames_text")
-                dpg.configure_item("speed_frames_text", color=(249, 27, 42))
+        #if dpg.get_frame_count() % 20 == 0:
+            #dpg.set_value("speed_frames_text", f"{fps} кадров/сек")
         # для соответствия воспроизведения частоты кадров видео и частоты обновления экрана
         time.sleep(max(0.0, 1/storage.frame_rate - dpg.get_delta_time()))
+    if not storage.current_object is None and storage.current_object["type"] == OBJECT_TYPES.video:
+        storage.add_to_video_timer(dpg.get_delta_time())
+
+        if storage.video_timer < 2.5 and dpg.get_item_user_data("video_player_window")["opacity"] < 255:
+            dpg.show_item("video_player_window")
+            dpg.set_item_user_data("video_player_window", {"opacity": dpg.get_item_user_data("video_player_window")["opacity"] + 20})
+            if dpg.get_item_user_data("video_player_window")["opacity"] > 255:
+                dpg.set_item_user_data("video_player_window", {"opacity": 255})
+            
+        if storage.video_timer > 2.5 and dpg.get_item_user_data("video_player_window")["opacity"] > 0:
+            dpg.set_item_user_data("video_player_window", {"opacity": dpg.get_item_user_data("video_player_window")["opacity"] - 20})
+            if dpg.get_item_user_data("video_player_window")["opacity"] < 0:
+                dpg.set_item_user_data("video_player_window", {"opacity": 0})
+                dpg.hide_item("video_player_window")
+
+        opacity = dpg.get_item_user_data("video_player_window")["opacity"]
+        app_info.apply_opacity_to_video_player(opacity)
+
     dpg.render_dearpygui_frame()
 
 dpg.destroy_context()
