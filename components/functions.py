@@ -232,7 +232,9 @@ class AppInfo:
             dpg.add_item_active_handler(callback=lambda: AppInfo.set_active_state(name))
             dpg.add_item_active_handler(callback=callback)
 
-        dpg.add_mouse_move_handler(callback=lambda: AppInfo.set_default_state(name), parent="global_handlers")
+        callback = lambda: AppInfo.set_default_state(name)
+        with dpg.handler_registry(tag=f"{name}_move_handler"):
+            dpg.add_mouse_move_handler(callback=callback)
 
         return handler_registry
 
@@ -246,20 +248,50 @@ class AppInfo:
         dpg.bind_item_theme(name, themes.default_menu_item_theme())
 
     def buttonize_menu_item(name, callback):
-        with dpg.item_handler_registry(tag=f"{name}_handler") as handler_registry:
+        with dpg.item_handler_registry(tag=f"{name}_handler", show=False) as handler_registry:
             dpg.add_item_hover_handler(callback=lambda: AppInfo.set_hover_menu_item_state(name))
             dpg.add_item_active_handler(callback=lambda: AppInfo.set_active_menu_item_state(name))
             dpg.add_item_active_handler(callback=callback)
 
-        dpg.add_mouse_move_handler(callback=lambda: AppInfo.set_default_menu_item_state(name), parent="global_handlers")
+        callback = lambda: AppInfo.set_default_menu_item_state(name)
+        with dpg.handler_registry(tag=f"{name}_move_handler", show=False):
+            dpg.add_mouse_move_handler(callback=callback)
 
         return handler_registry
+
+    def open_file_menu():
+        dpg.show_item("file_menu_window")
+        for file_menu_item in dpg.get_item_children("file_menu", slot=1):
+            if dpg.get_item_type(file_menu_item) == "mvAppItemType::mvChildWindow":
+                if dpg.get_item_user_data(file_menu_item)["disabled"] == False:
+                    item_alias = dpg.get_item_alias(file_menu_item)
+                    dpg.show_item(f"{item_alias}_move_handler")
+                    dpg.show_item(f"{item_alias}_handler")
+
+    def open_app_menu():
+        dpg.show_item("app_menu_window")
+        for app_menu_item in dpg.get_item_children("app_menu", slot=1):
+            if dpg.get_item_type(app_menu_item) == "mvAppItemType::mvChildWindow":
+                item_alias = dpg.get_item_alias(app_menu_item)
+                dpg.show_item(f"{item_alias}_move_handler")
+                dpg.show_item(f"{item_alias}_handler")
 
     def close_all_menus():
         if not dpg.get_item_state("file_button")["hovered"]:
             dpg.hide_item("file_menu_window")
+            for file_menu_item in dpg.get_item_children("file_menu", slot=1):
+                if dpg.get_item_type(file_menu_item) == "mvAppItemType::mvChildWindow":
+                    if dpg.get_item_user_data(file_menu_item)["disabled"] == False:
+                        item_alias = dpg.get_item_alias(file_menu_item)
+                        dpg.hide_item(f"{item_alias}_move_handler")
+                        dpg.hide_item(f"{item_alias}_handler")
         if not dpg.get_item_state("app_button")["hovered"]:
             dpg.hide_item("app_menu_window")
+            for app_menu_item in dpg.get_item_children("app_menu", slot=1):
+                if dpg.get_item_type(app_menu_item) == "mvAppItemType::mvChildWindow":
+                    item_alias = dpg.get_item_alias(app_menu_item)
+                    dpg.hide_item(f"{item_alias}_move_handler")
+                    dpg.hide_item(f"{item_alias}_handler")
 
     def update_viewport_title():
         demo = ""
@@ -290,8 +322,8 @@ class AppInfo:
         if dpg.get_item_height("main_image_desk") > dpg.get_viewport_client_height():
             minus_width = 16
         if dpg.get_item_width("main_image_desk") > dpg.get_viewport_client_width():
-            minus_height = 22
-        dpg.set_item_pos("video_player_window", (0, dpg.get_viewport_client_height() - 128 - minus_height))
+            minus_height = 16
+        dpg.set_item_pos("video_player_window", (0, dpg.get_viewport_client_height() - 134 - minus_height))
         dpg.set_item_width("video_player_window", dpg.get_viewport_client_width() - minus_width)
         dpg.set_item_width("player_pan", dpg.get_viewport_client_width() - 188 - minus_width)
         dpg.set_item_indent("player_buttons", (dpg.get_viewport_client_width() / 2 - minus_width) - 108)
@@ -312,3 +344,11 @@ class AppInfo:
         dpg.configure_item("lock_button", tint_color=(255, 255, 255, opacity))
         dpg.configure_item("time_video_from_begin", color=(255, 255, 255, opacity))
         dpg.configure_item("video_duration", color=(255, 255, 255, opacity))
+
+    def set_close_all_button_default():
+        if not dpg.get_item_state("close_all_files_button")["hovered"]:
+            dpg.bind_item_theme("close_all_files_button", themes.close_all_objects_button_default())
+
+    def resize_file_explorer_window():
+        file_explorer_width = dpg.get_item_width("file_explorer_window")
+        dpg.set_item_width("spacer_between_help_and_close_button", file_explorer_width/2 - 156)

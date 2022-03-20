@@ -2,7 +2,7 @@ from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
 from components.functions import AppInfo as app_info
-from components.storage import OBJECT_TYPES
+from components.storage import OBJECT_STATUSES, OBJECT_TYPES
 import components.key_module as key_module
 import components.plugin_manager as pm
 from components.storage import storage, keys
@@ -84,35 +84,38 @@ with dpg.font_registry():
         dpg.add_font_range(0x2010, 0x2015)
     app_info.load_font(r"assets\fonts\NotoSans-Bold.ttf", 24, tag="title")
     app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 18, tag="mini_font")
-    app_info.load_font(r"assets\fonts\OpenSans-Bold.ttf", 18)
-    app_info.load_font(r"assets\fonts\OpenSans-Regular.ttf", 18)
-    app_info.load_font(r"assets\fonts\TisaSansPro-Regular.ttf", 18)
-    app_info.load_font(r"assets\fonts\Roboto-Regular.ttf", 18)
-    app_info.load_font(r"assets\fonts\Roboto-Medium.ttf", 18)
-    app_info.load_font(r"assets\fonts\TisaSansPro-Regular.ttf", 18)
+    app_info.load_font(r"assets\fonts\OpenSans-SemiBold.ttf", 20, tag="button_label")
+    app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 16, tag="micro_font")
 
 assets.get_assets()
 
-with dpg.handler_registry(tag="global_handlers"):
+with dpg.handler_registry():
     dpg.add_mouse_release_handler(callback=pm.undragging)
     dpg.add_key_press_handler(78, callback=lambda: dpg.show_item("settings_of_the_program"))
     dpg.add_key_press_handler(65, callback=pm.apply_chain)
     dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
     dpg.add_mouse_release_handler(callback=app_info.close_all_menus)
     dpg.add_mouse_move_handler(callback=lambda: storage.reset_video_timer())
+    dpg.add_mouse_move_handler(callback=app_info.set_close_all_button_default)
 
 with dpg.item_handler_registry(tag="image_handler_registry"):
     dpg.add_item_hover_handler(callback=pm.get_mouse_pos)
     dpg.add_item_clicked_handler(callback=pm.set_2d_point_values)
 
-file_button_registry = app_info.buttonize("file_button", 
-lambda: dpg.show_item("file_menu_window") if not dpg.get_item_configuration("file_menu_window")['show'] else None)
-app_button_registry = app_info.buttonize("app_button", 
-lambda: dpg.show_item("app_menu_window") if not dpg.get_item_configuration("app_menu_window")['show'] else None)
+file_button_registry = app_info.buttonize("file_button", app_info.open_file_menu)
+app_button_registry = app_info.buttonize("app_button", app_info.open_app_menu)
 information_button_registry = app_info.buttonize("information_button", None)
 
 with dpg.item_handler_registry(tag="pan_handler_registry"):
     dpg.add_item_active_handler(callback=lambda: pv.open_frame(app_info.convert_to_index()))
+
+with dpg.item_handler_registry(tag="close_all_files_button_registry"):
+    dpg.add_item_hover_handler(callback=lambda: 
+    dpg.bind_item_theme("close_all_files_button", themes.close_all_objects_button_hover()))
+    dpg.add_item_active_handler(callback=fo.close_all_objects)
+
+with dpg.item_handler_registry(tag="resize_window_handler"):
+    dpg.add_item_resize_handler(callback=app_info.resize_file_explorer_window)
 
 dpg.add_item_handler_registry(tag="none_handler")
 
@@ -271,7 +274,8 @@ with dpg.window(tag="objects_window"):
             with dpg.group(horizontal=True, horizontal_spacing=0):
                 dpg.add_image_button("prev_file_inactive", tag="prev_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
-                dpg.add_image_button("more_files_inactive", tag="more_files_button", enabled=False)
+                dpg.add_image_button("more_files_inactive", tag="more_files_button", enabled=False, 
+                callback=lambda: dpg.show_item("file_explorer_window"))
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
                 dpg.add_image_button("next_file_inactive", tag="next_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
@@ -280,7 +284,9 @@ with dpg.window(tag="objects_window"):
         dpg.add_spacer(width=10)
         dpg.add_image_button("close_image_inactive", tag="close_files_button", enabled=False)
         dpg.bind_item_theme("close_files_button", themes.close_button_theme())
-        dpg.add_image_button("delete_temp_files", tag="close_and_delete_temp_files", enabled=False, show=False)
+        dpg.add_spacer(width=10)
+        dpg.add_image_button("delete_temp_files", tag="close_and_delete_temp_files", enabled=False, 
+        show=False, callback=lambda: dpg.show_item("warning_of_delete_window"))
         dpg.bind_item_theme("close_and_delete_temp_files", themes.close_button_theme())
         dpg.add_spacer(width=10)
         dpg.add_child_window(height=32, width=-128)
@@ -366,44 +372,83 @@ with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no
 no_resize=True, tag="file_menu_window", width=293, height=388):
     with dpg.child_window(width=291, height=386, tag="file_menu"):
         dpg.add_spacer(height=5)
-
-custom_components.menu_item("Открыть файл", "file_menu", shortcut="Ctrl + O", spacer_width=77, 
-width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
-custom_components.menu_item("Открыть папку", "file_menu", shortcut="Ctrl + F", spacer_width=75, 
-width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
-custom_components.menu_item("Загрузить из интернета", "file_menu", width=300,
-tag="download_from_internet_menu_item", disabled=True, demo=True)
-custom_components.menu_item("Подключиться к IP-камере", "file_menu", width=300,
-tag="connect_to_camera_menu_item", disabled=True, demo=True)
-dpg.add_color_button((228, 228, 228), indent=20, parent="file_menu", width=253, height=1, no_border=True, no_drag_drop=True)
-custom_components.menu_item("Сохранить изображение / кадр", "file_menu",
-tag="save_image_menu_item", disabled=True)
-custom_components.menu_item("Сохранить все кадры", "file_menu", 
-tag="save_all_frames_menu_item", disabled=True)
-custom_components.menu_item("Сохранить видео", "file_menu",
-tag="save_video_menu_item", disabled=True)
-custom_components.menu_item("Сохранить все изображения", "file_menu",
-tag="save_all_images_menu_item", disabled=True)
-dpg.add_color_button((228, 228, 228), indent=20, parent="file_menu", width=253, height=1, no_border=True, no_drag_drop=True)
-custom_components.menu_item("Закрыть", "file_menu", spacer_width=123, shortcut="Ctrl + C",
-tag="close_menu_item", disabled=True, width=300)
-custom_components.menu_item("Закрыть всё", "file_menu", spacer_width=48, shortcut="Ctrl + Shift + C",
-tag="close_all_menu_item", disabled=True, width=300)
-
+        custom_components.add_menu_item("Открыть файл", shortcut="Ctrl + O", spacer_width=77, 
+        width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
+        custom_components.add_menu_item("Открыть папку", shortcut="Ctrl + F", spacer_width=75, 
+        width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
+        custom_components.add_menu_item("Загрузить из интернета", width=300,
+        tag="download_from_internet_menu_item", disabled=True, demo=True)
+        custom_components.add_menu_item("Подключиться к IP-камере", width=300,
+        tag="connect_to_camera_menu_item", disabled=True, demo=True)
+        dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
+        custom_components.add_menu_item("Сохранить изображение / кадр",
+        tag="save_image_menu_item", disabled=True)
+        custom_components.add_menu_item("Сохранить все кадры", tag="save_all_frames_menu_item", disabled=True)
+        custom_components.add_menu_item("Сохранить видео", tag="save_video_menu_item", disabled=True)
+        custom_components.add_menu_item("Сохранить все изображения", "file_menu",
+        tag="save_all_images_menu_item", disabled=True)
+        dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
+        custom_components.add_menu_item("Закрыть", spacer_width=123, shortcut="Ctrl + C",
+        tag="close_menu_item", disabled=True, width=300, callback=fo.close_object)
+        custom_components.add_menu_item("Закрыть всё", spacer_width=48, shortcut="Ctrl + Shift + C",
+        tag="close_all_menu_item", disabled=True, width=300, callback=fo.close_all_objects)
 dpg.bind_item_theme("file_menu_window", themes.window_shadow())
 
 with dpg.window(label="Приложение", show=False, pos=(181, 48), no_title_bar=True, no_move=True, 
 no_resize=True, tag="app_menu_window", width=224, height=160):
     with dpg.child_window(width=222, height=158, tag="app_menu"):
         dpg.add_spacer(height=5)
-
-custom_components.menu_item("Настройки", "app_menu", spacer_width=33, shortcut="Ctrl + N",
-tag="settings_menu_item", width=222)
-custom_components.menu_item("Горячие клавиши", "app_menu", tag="hotkeys_menu_item", width=222)
-custom_components.menu_item("Лицензия и демо-версия", "app_menu", tag="license_menu_item", width=222)
-custom_components.menu_item("О программе", "app_menu", tag="about_program_menu_item", width=222)
-
+        custom_components.add_menu_item("Настройки", spacer_width=33, shortcut="Ctrl + N",
+        tag="settings_menu_item", width=222, callback=lambda: dpg.show_item("settings_of_the_program"))
+        custom_components.add_menu_item("Горячие клавиши", tag="hotkeys_menu_item", width=222, 
+        callback=lambda: dpg.show_item("hotkeys_window"))
+        custom_components.add_menu_item("Лицензия и демо-версия", tag="license_menu_item", width=222)
+        custom_components.add_menu_item("О программе", tag="about_program_menu_item", width=222, 
+        callback=lambda: dpg.show_item("info_about_the_program"))
 dpg.bind_item_theme("app_menu_window", themes.window_shadow())
+
+# Окно с предупреждением
+with dpg.window(no_title_bar=True, width=210, height=100, pos=(726, 48), no_resize=True, 
+no_move=True, tag="warning_of_delete_window", show=False):
+    with dpg.child_window(width=208, height=98, tag="warning_of_delete"):
+        dpg.add_spacer(height=7)
+        dpg.add_text("Временные файлы будут удалены, а файл закрыт.", indent=10, wrap=198)
+        dpg.add_spacer(height=3)
+        with dpg.group(horizontal=True, indent=10):
+            dpg.add_button(label="Удалить", tag="delete_temp_files_button", callback=pv.delete_temp_folders_and_close_video)
+            dpg.bind_item_theme("delete_temp_files_button", themes.delete_button())
+            dpg.bind_item_font("delete_temp_files_button", "button_label")
+            dpg.add_button(label="Отмена", tag="cancel_button", callback=lambda: dpg.hide_item("warning_of_delete_window"))
+            dpg.bind_item_theme("cancel_button", themes.cancel_button())
+dpg.bind_item_theme("warning_of_delete_window", themes.window_shadow())
+
+with dpg.window(label="Просмотр открытых файлов", width=440, height=420, pos=(200, 100), 
+tag="file_explorer_window", show=False, min_size=(288, 252)):
+    with dpg.child_window(tag="search_field", width=-10, height=32, no_scrollbar=True, indent=10):
+        with dpg.group(horizontal=True):
+            dpg.add_image("search_icon", indent=2)
+            dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1,
+            callback=lambda s, d: dpg.set_value("file_filter_container", d))
+    dpg.bind_item_theme("search_field", themes.search_field())
+    dpg.add_spacer(height=4)
+    with dpg.child_window(height=-48, tag="file_container", indent=10):
+        dpg.add_filter_set(tag="file_filter_container")
+    dpg.bind_item_theme("file_container", themes.thin_scrollbar())
+    dpg.add_spacer(height=7)
+    with dpg.group(horizontal=True):
+        with dpg.group(indent=20):
+            dpg.add_spacer()
+            dpg.add_image("help_img")
+        dpg.add_spacer(width=64, tag="spacer_between_help_and_close_button")
+        with dpg.child_window(width=194, height=33, tag="close_all_files_button"):
+            with dpg.group(horizontal=True):
+                dpg.add_image("circle_close")
+                dpg.add_text("Закрыть все файлы", color=(253, 62, 62), pos=(40, 5))
+        dpg.bind_item_theme("close_all_files_button", themes.close_all_objects_button_default())
+        dpg.bind_item_handler_registry("close_all_files_button", "close_all_files_button_registry")
+dpg.bind_item_handler_registry("file_explorer_window", "resize_window_handler")
+
+dpg.bind_item_theme("file_explorer_window", themes.window_theme())
 
 with dpg.window(label="Предупреждение", show=False, tag="please_connect_flash", pos=(400, 300), no_resize=True, no_collapse=True):
     dpg.add_text("Пожалуйста, вставьте электронный ключ в компьютер!")
@@ -479,7 +524,7 @@ dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 
 dpg.show_style_editor()
 #dpg.show_debug()
-#dpg.show_metrics()
+dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
 dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)

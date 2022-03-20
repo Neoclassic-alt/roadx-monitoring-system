@@ -93,7 +93,7 @@ def process_image(data, single_image=True, index=None):
     return data
 
 # открыть новые объекты при помощи OpenCV
-def open_cv(url, type, status):
+def open_cv(url, short_url, type, status):
     data = None
     dpg.hide_item("limit_1_minute")
     storage.clear_additional_data()
@@ -114,8 +114,10 @@ def open_cv(url, type, status):
         dpg.show_item("status_bar_info")
         dpg.hide_item("video_player_window")
         dpg.hide_item("close_and_delete_temp_files")
-        custom_components.enable_menu_item("save_image_menu_item")
-        custom_components.enable_menu_item("save_all_images_menu_item")
+        dpg.disable_item("close_and_delete_temp_files")
+        if storage.current_object is None:
+            custom_components.enable_menu_item("save_image_menu_item")
+            custom_components.enable_menu_item("save_all_images_menu_item")
         #show_additional_data()
     if type in OBJECT_TYPES.video:
         # CRC-код будет именем папки с временными файлами
@@ -171,12 +173,15 @@ def open_cv(url, type, status):
         dpg.hide_item("progress_bar")
         dpg.show_item("video_player_window")
         dpg.show_item("close_and_delete_temp_files")
-        custom_components.enable_menu_item("save_image_menu_item")
-        custom_components.enable_menu_item("save_all_frames_menu_item")
-        custom_components.enable_menu_item("save_video_menu_item")
+        dpg.enable_item("close_and_delete_temp_files")
+        if storage.current_object is None:
+            custom_components.enable_menu_item("save_image_menu_item")
+            custom_components.enable_menu_item("save_all_frames_menu_item")
+            custom_components.enable_menu_item("save_video_menu_item")
     dpg.show_item("main_image_child_window")
-    custom_components.enable_menu_item("close_menu_item")
-    custom_components.enable_menu_item("close_all_menu_item")
+    if storage.current_object is None:
+        custom_components.enable_menu_item("close_menu_item")
+        custom_components.enable_menu_item("close_all_menu_item")
     app_info.update_status_bar_info()
     app_info.update_viewport_title()
 
