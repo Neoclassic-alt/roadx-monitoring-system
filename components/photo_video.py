@@ -5,7 +5,7 @@ from components.storage import storage
 from components.storage import keys
 import components.plugin_manager as pm
 import components.file_operations as fo
-from components.functions import AppInfo as app_info
+import components.interface_functions as inf
 import components.custom_components as custom_components
 import zlib
 import os
@@ -167,7 +167,7 @@ def open_cv(url, short_url, type, status):
         dpg.set_value("video_duration", "{0:02d}:{1:02d}".format(minutes, seconds))
         data = cv2.imread(f"{temp_folder_path}/{storage.current_frame}.jpg")
         change_texture(data)
-        app_info.resize_viewport()
+        inf.resize_viewport()
 
         dpg.hide_item("state_of_loading")
         dpg.hide_item("progress_bar")
@@ -182,8 +182,8 @@ def open_cv(url, short_url, type, status):
     if storage.current_object is None:
         custom_components.enable_menu_item("close_menu_item")
         custom_components.enable_menu_item("close_all_menu_item")
-    app_info.update_status_bar_info()
-    app_info.update_viewport_title()
+    inf.update_status_bar_info()
+    inf.update_viewport_title()
 
 # загрузить изображение с Интернета
 def get_image_from_url(url):
@@ -288,7 +288,7 @@ def process_all_frames():
 
     dpg.delete_item("video_data_group", children_only=True)
     if storage.program_settings["display_video_process"]:
-        app_info.create_plots()
+        inf.create_plots()
         dpg.show_item("video_data")
     
     if storage.program_settings["send_signal"]:

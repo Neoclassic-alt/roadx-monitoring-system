@@ -1,7 +1,7 @@
 from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
-from components.functions import AppInfo as app_info
+import components.functions as utils
 from components.storage import OBJECT_TYPES
 import components.key_module as key_module
 import components.plugin_manager as pm

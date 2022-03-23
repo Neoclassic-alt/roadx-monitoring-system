@@ -1,7 +1,7 @@
 from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
-from components.functions import AppInfo as app_info
+import components.utils as utils
 from components.storage import OBJECT_STATUSES, OBJECT_TYPES
 import components.key_module as key_module
 import components.plugin_manager as pm
@@ -9,11 +9,12 @@ from components.storage import storage, keys
 import components.styling as themes
 import components.photo_video as pv
 import components.file_operations as fo
+import components.interface_functions as inf
 import warnings
 import pyperclip as clipboard
 import time
 import webbrowser
-import components.custom_components as custom_components
+import components.custom_components as cc
 import components.assets as assets
 
 # загрузка модулей
@@ -82,10 +83,10 @@ with dpg.font_registry():
         dpg.add_font_range(0x2190, 0x219e)
         dpg.add_font_range(0x2100, 0x214f)
         dpg.add_font_range(0x2010, 0x2015)
-    app_info.load_font(r"assets\fonts\NotoSans-Bold.ttf", 24, tag="title")
-    app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 18, tag="mini_font")
-    app_info.load_font(r"assets\fonts\OpenSans-SemiBold.ttf", 20, tag="button_label")
-    app_info.load_font(r"assets\fonts\NotoSans-Regular.ttf", 16, tag="micro_font")
+    utils.load_font(r"assets\fonts\NotoSans-Bold.ttf", 24, tag="title")
+    utils.load_font(r"assets\fonts\NotoSans-Regular.ttf", 18, tag="mini_font")
+    utils.load_font(r"assets\fonts\OpenSans-SemiBold.ttf", 20, tag="button_label")
+    utils.load_font(r"assets\fonts\NotoSans-Regular.ttf", 16, tag="micro_font")
 
 assets.get_assets()
 
@@ -94,20 +95,20 @@ with dpg.handler_registry():
     dpg.add_key_press_handler(78, callback=lambda: dpg.show_item("settings_of_the_program"))
     dpg.add_key_press_handler(65, callback=pm.apply_chain)
     dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
-    dpg.add_mouse_release_handler(callback=app_info.close_all_menus)
+    dpg.add_mouse_release_handler(callback=inf.close_all_menus)
     dpg.add_mouse_move_handler(callback=lambda: storage.reset_video_timer())
-    dpg.add_mouse_move_handler(callback=app_info.set_close_all_button_default)
+    dpg.add_mouse_move_handler(callback=inf.set_close_all_button_default)
 
-with dpg.item_handler_registry(tag="image_handler_registry"):
+with dpg.item_handler_registry(tag="image_handler_registry", show=False):
     dpg.add_item_hover_handler(callback=pm.get_mouse_pos)
     dpg.add_item_clicked_handler(callback=pm.set_2d_point_values)
 
-file_button_registry = app_info.buttonize("file_button", app_info.open_file_menu)
-app_button_registry = app_info.buttonize("app_button", app_info.open_app_menu)
-information_button_registry = app_info.buttonize("information_button", None)
+file_button_registry = inf.buttonize("file_button", inf.open_file_menu)
+app_button_registry = inf.buttonize("app_button", inf.open_app_menu)
+information_button_registry = inf.buttonize("information_button", None)
 
 with dpg.item_handler_registry(tag="pan_handler_registry"):
-    dpg.add_item_active_handler(callback=lambda: pv.open_frame(app_info.convert_to_index()))
+    dpg.add_item_active_handler(callback=lambda: pv.open_frame(utils.convert_to_index()))
 
 with dpg.item_handler_registry(tag="close_all_files_button_registry"):
     dpg.add_item_hover_handler(callback=lambda: 
@@ -115,9 +116,7 @@ with dpg.item_handler_registry(tag="close_all_files_button_registry"):
     dpg.add_item_active_handler(callback=fo.close_all_objects)
 
 with dpg.item_handler_registry(tag="resize_window_handler"):
-    dpg.add_item_resize_handler(callback=app_info.resize_file_explorer_window)
-
-dpg.add_item_handler_registry(tag="none_handler")
+    dpg.add_item_resize_handler(callback=inf.resize_file_explorer_window)
 
 with dpg.window(label="Управление обработкой изображений и видео", show=False, autosize=True, pos=(300, 100), 
 tag="plugins_window", no_resize=True):
@@ -200,7 +199,7 @@ with dpg.file_dialog(label="Сохранить все объекты", callback=
 show=False, tag="save_files_dialog", width=800, height=600):
     dpg.add_text("Сохранить под именами:")
     dpg.add_radio_button(items=("Исходные имена", "Программное имя"), tag="set_program_name",
-    default_value="Исходные имена", callback=app_info.set_group_program_name_visible)
+    default_value="Исходные имена", callback=inf.set_group_program_name_visible)
     with dpg.group(tag="program_text_field", show=False):
         dpg.add_text("Программное имя объекта без расширения. Символ $ - заменяется на цифру. Наличие символа $ обязательно.")
         dpg.add_text("Изображения с одинаковым именем перезаписываются.", color=(255, 0, 0, 255))
@@ -372,25 +371,25 @@ with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no
 no_resize=True, tag="file_menu_window", width=293, height=388):
     with dpg.child_window(width=291, height=386, tag="file_menu"):
         dpg.add_spacer(height=5)
-        custom_components.add_menu_item("Открыть файл", shortcut="Ctrl + O", spacer_width=77, 
+        cc.add_menu_item("Открыть файл", shortcut="Ctrl + O", spacer_width=77, 
         width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
-        custom_components.add_menu_item("Открыть папку", shortcut="Ctrl + F", spacer_width=75, 
+        cc.add_menu_item("Открыть папку", shortcut="Ctrl + F", spacer_width=75, 
         width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
-        custom_components.add_menu_item("Загрузить из интернета", width=300,
+        cc.add_menu_item("Загрузить из интернета", width=300,
         tag="download_from_internet_menu_item", disabled=True, demo=True)
-        custom_components.add_menu_item("Подключиться к IP-камере", width=300,
+        cc.add_menu_item("Подключиться к IP-камере", width=300,
         tag="connect_to_camera_menu_item", disabled=True, demo=True)
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
-        custom_components.add_menu_item("Сохранить изображение / кадр",
+        cc.add_menu_item("Сохранить изображение / кадр",
         tag="save_image_menu_item", disabled=True)
-        custom_components.add_menu_item("Сохранить все кадры", tag="save_all_frames_menu_item", disabled=True)
-        custom_components.add_menu_item("Сохранить видео", tag="save_video_menu_item", disabled=True)
-        custom_components.add_menu_item("Сохранить все изображения", "file_menu",
+        cc.add_menu_item("Сохранить все кадры", tag="save_all_frames_menu_item", disabled=True)
+        cc.add_menu_item("Сохранить видео", tag="save_video_menu_item", disabled=True)
+        cc.add_menu_item("Сохранить все изображения", "file_menu",
         tag="save_all_images_menu_item", disabled=True)
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
-        custom_components.add_menu_item("Закрыть", spacer_width=123, shortcut="Ctrl + C",
+        cc.add_menu_item("Закрыть", spacer_width=123, shortcut="Ctrl + C",
         tag="close_menu_item", disabled=True, width=300, callback=fo.close_object)
-        custom_components.add_menu_item("Закрыть всё", spacer_width=48, shortcut="Ctrl + Shift + C",
+        cc.add_menu_item("Закрыть всё", spacer_width=48, shortcut="Ctrl + Shift + C",
         tag="close_all_menu_item", disabled=True, width=300, callback=fo.close_all_objects)
 dpg.bind_item_theme("file_menu_window", themes.window_shadow())
 
@@ -398,12 +397,12 @@ with dpg.window(label="Приложение", show=False, pos=(181, 48), no_titl
 no_resize=True, tag="app_menu_window", width=224, height=160):
     with dpg.child_window(width=222, height=158, tag="app_menu"):
         dpg.add_spacer(height=5)
-        custom_components.add_menu_item("Настройки", spacer_width=33, shortcut="Ctrl + N",
+        cc.add_menu_item("Настройки", spacer_width=33, shortcut="Ctrl + N",
         tag="settings_menu_item", width=222, callback=lambda: dpg.show_item("settings_of_the_program"))
-        custom_components.add_menu_item("Горячие клавиши", tag="hotkeys_menu_item", width=222, 
+        cc.add_menu_item("Горячие клавиши", tag="hotkeys_menu_item", width=222, 
         callback=lambda: dpg.show_item("hotkeys_window"))
-        custom_components.add_menu_item("Лицензия и демо-версия", tag="license_menu_item", width=222)
-        custom_components.add_menu_item("О программе", tag="about_program_menu_item", width=222, 
+        cc.add_menu_item("Лицензия и демо-версия", tag="license_menu_item", width=222)
+        cc.add_menu_item("О программе", tag="about_program_menu_item", width=222, 
         callback=lambda: dpg.show_item("info_about_the_program"))
 dpg.bind_item_theme("app_menu_window", themes.window_shadow())
 
@@ -493,7 +492,7 @@ on_close=lambda: dpg.hide_item("settings_of_program_have_saved")):
     default_value=storage.program_settings["display_video_process"], tag="display_video_process")
     dpg.add_spacer(height=10)
     with dpg.group(horizontal=True):
-        dpg.add_button(label="Сохранить настройки", callback=app_info.save_program_settings)
+        dpg.add_button(label="Сохранить настройки", callback=inf.save_program_settings)
         dpg.add_text("Настройки сохранены", show=False, tag="settings_of_program_have_saved")
 
 with dpg.window(label="О программе", show=False, tag="info_about_the_program", no_resize=True, pos=(300, 100)):
@@ -523,12 +522,12 @@ dpg.bind_theme(themes.get_theme())
 dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 
 dpg.show_style_editor()
-#dpg.show_debug()
+dpg.show_debug()
 dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
 dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
-dpg.set_viewport_resize_callback(callback=app_info.resize_viewport)
+dpg.set_viewport_resize_callback(callback=inf.resize_viewport)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")
 dpg.set_viewport_large_icon("assets/images/app.ico")
@@ -566,7 +565,7 @@ while dpg.is_dearpygui_running():
                 dpg.hide_item("video_player_window")
 
         opacity = dpg.get_item_user_data("video_player_window")["opacity"]
-        app_info.apply_opacity_to_video_player(opacity)
+        inf.apply_opacity_to_video_player(opacity)
 
     dpg.render_dearpygui_frame()
 

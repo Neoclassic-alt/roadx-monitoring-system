@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from components.functions import AppInfo as app_info
+import components.interface_functions as inf
 import components.styling as themes
 from components.storage import OBJECT_STATUSES
 import components.file_operations as fo
@@ -23,19 +23,24 @@ spacer_width=0, disabled=False, demo=False, width=255):
                 dpg.add_text(shortcut, color=(194, 194, 194))
 
     dpg.bind_item_theme(tag, themes.default_menu_item_theme())
-    if not disabled:
-        open_file_menu_item_registry = app_info.buttonize_menu_item(tag, callback)
-        dpg.bind_item_handler_registry(tag, open_file_menu_item_registry)
+    dpg.bind_item_handler_registry(tag, inf.buttonize_menu_item(tag, callback))
 
-def enable_menu_item(tag, callback=None):
-    open_file_menu_item_registry = app_info.buttonize_menu_item(tag, callback)
-    dpg.bind_item_handler_registry(tag, open_file_menu_item_registry)
+    if disabled:
+        disable_menu_item(tag)
+
+def enable_menu_item(tag):
+    #open_file_menu_item_registry = inf.buttonize_menu_item(tag, callback)
+    #dpg.bind_item_handler_registry(tag, open_file_menu_item_registry)
+    dpg.show_item(f"{tag}_move_handler")
+    dpg.show_item(f"{tag}_handler")
     dpg.configure_item(dpg.get_item_children(dpg.get_item_children(tag, slot=1)[1], slot=1)[1], color=(51, 51, 51))
     dpg.set_item_user_data(tag, user_data={"disabled": False})
 
 def disable_menu_item(tag):
     dpg.configure_item(dpg.get_item_children(dpg.get_item_children(tag, slot=1)[1], slot=1)[1], color=(194, 194, 194))
-    dpg.bind_item_handler_registry(tag, "none_handler")
+    #dpg.bind_item_handler_registry(tag, "none_handler")
+    dpg.hide_item(f"{tag}_move_handler")
+    dpg.hide_item(f"{tag}_handler")
     dpg.set_item_user_data(tag, user_data={"disabled": True})
 
 def add_file_item(filename, type_, status=OBJECT_STATUSES.new, short_url=None, current=False, 
@@ -60,7 +65,7 @@ extra_directory=False):
         dpg.add_image_button("close_small", callback=lambda: fo.close_object(filename))
         dpg.bind_item_theme(dpg.last_item(), themes.close_button_theme())
         if not current:
-            handler_registry = app_info.buttonize(f"file_{filename}", lambda: fo.change_object(filename))
+            handler_registry = inf.buttonize(f"file_{filename}", lambda: fo.change_object(filename))
             dpg.bind_item_handler_registry(f"file_{filename}", handler_registry)
 
 def set_file_current(filename):

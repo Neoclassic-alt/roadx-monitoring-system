@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from components.functions import AppInfo as functions
+import components.utils as utils
 import components.photo_video as pv
 from components.storage import storage
 from components.storage import keys
@@ -308,7 +308,7 @@ def process_chain(func):
             current_text = current_text.rpartition('  →  ')[0]
             if len(current_text) > 91:
                 current_text = current_text[:80] + '...' + f" (всего {len(storage.chain_of_plugins)}" + \
-            f" {functions.plural(len(storage.chain_of_plugins), 'плагин', 'плагина', 'плагинов')})"
+            f" {utils.plural(len(storage.chain_of_plugins), 'плагин', 'плагина', 'плагинов')})"
             dpg.set_value("chain_of_plugins", current_text)
         if not storage.current_object is None and storage.program_settings["auto_apply"]:
             apply_chain()
@@ -443,7 +443,8 @@ def on_close(sender, app_data, user_data):
     dpg.delete_item("settings_have_saved_text" + str(user_data))
     if storage.crosshair[0]:
         dpg.delete_item("image_mouse_tooltip")
-        dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+        #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+        dpg.hide_item("image_handler_registry")
         storage.set_value(keys.CROSSHAIR, [False, None, None])
 
 def drag_plugin():
@@ -478,7 +479,8 @@ def set_2d_point_values():
     window_pos = dpg.get_item_pos("main_image_child_window")
     y_scroll = dpg.get_y_scroll("objects_window")
     x_scroll = dpg.get_x_scroll("main_image_child_window")
-    dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+    #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+    dpg.hide_item("image_handler_registry")
     dpg.bind_item_theme(storage.crosshair[1], themes.get_crosshair_button_theme())
     current_plugin = storage.plugins_titles_to_names[dpg.get_value("list_of_plugins")]
     storage.set_prior_plugin_settings([current_plugin, storage.crosshair[2]], 
@@ -500,10 +502,12 @@ def set_crosshair_mode(sender, app_data, user_data):
         dpg.bind_item_theme(sender, themes.get_green_crosshair_button_theme())
         dpg.add_tooltip("main_image_desk", tag="image_mouse_tooltip")
         dpg.add_text("(0, 0)", parent="image_mouse_tooltip", tag="image_mouse_tooltip_text")
-        dpg.bind_item_handler_registry("main_image_desk", "image_handler_registry")
+        #dpg.bind_item_handler_registry("main_image_desk", "image_handler_registry")
+        dpg.show_item("image_handler_registry")
         storage.set_value(keys.CROSSHAIR, [True, sender, user_data])
     else:
         dpg.bind_item_theme(sender, themes.get_crosshair_button_theme())
         dpg.delete_item("image_mouse_tooltip")
-        dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+        #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
+        dpg.hide_item("image_handler_registry")
         storage.set_value(keys.CROSSHAIR, [False, None, None])
