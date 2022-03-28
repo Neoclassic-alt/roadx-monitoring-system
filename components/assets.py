@@ -5,10 +5,11 @@ from components.storage import storage
 def get_assets():
     with dpg.texture_registry(tag="texture_registry"):
         dpg.add_raw_texture(2000, 2000, storage.current_data, format=dpg.mvFormat_Float_rgba, tag="main_image")
-        utils.add_static_texture(r"assets/images/crosshair-three.png", "crosshair_img")
+        utils.add_static_texture(r"assets/new-icons/crosshair.png", "crosshair_img")
         utils.add_static_texture(r"assets/images/app-icon-128x128.png", "app_splash")
         utils.add_static_texture(r"assets/images/app-icon-32x32.png", "app_logo")
         utils.add_static_texture(r"assets/new-icons/help.png", "help_img")
+        utils.add_static_texture(r"assets/new-icons/help-mini.png", "help_mini")
         utils.add_static_texture(r"assets/new-icons/red-point.png", "red_point")
         utils.add_static_texture(r"assets/new-icons/add-image.png", "add_image")
         utils.add_static_texture(r"assets/new-icons/add-folder.png", "add_folder")
@@ -52,3 +53,7 @@ def get_assets():
         utils.add_static_texture(r"assets/new-icons/current-file.png", "current_file")
         utils.add_static_texture(r"assets/new-icons/close-small.png", "close_small")
         utils.add_static_texture(r"assets/new-icons/circle-close.png", "circle_close")
+        utils.add_static_texture(r"assets/new-icons/button-separator.png", "button_separator")
+        utils.add_static_texture(r"assets/new-icons/star.png", "star")
+        utils.add_static_texture(r"assets/new-icons/star-dismiss.png", "star_dismiss")
+        utils.add_static_texture(r"assets/new-icons/star-add.png", "star_add")

@@ -93,19 +93,21 @@ def process_image(data, single_image=True, index=None):
     return data
 
 # открыть новые объекты при помощи OpenCV
-def open_cv(url, short_url, type, status):
+def open_cv(object):
     data = None
+    url = object["url"]
+    object_type = object["type"]
     dpg.hide_item("limit_1_minute")
     storage.clear_additional_data()
     #storage.set_value(keys.PROCESSED, False)
-    if type == OBJECT_TYPES.image:
+    if object_type == OBJECT_TYPES.image:
         data = cv2.imread(url)
-    if type == OBJECT_TYPES.url:
+    if object_type == OBJECT_TYPES.url:
         data = get_image_from_url(url)
         if data is None:
             print("Объект недоступен")
             return
-    if type in (OBJECT_TYPES.image, OBJECT_TYPES.url):
+    if object_type in (OBJECT_TYPES.image, OBJECT_TYPES.url):
         if len(storage.chain_of_plugins) > 0:
             data = process_image(data)
         change_texture(data)
@@ -119,7 +121,7 @@ def open_cv(url, short_url, type, status):
             custom_components.enable_menu_item("save_image_menu_item")
             custom_components.enable_menu_item("save_all_images_menu_item")
         #show_additional_data()
-    if type in OBJECT_TYPES.video:
+    if object_type in OBJECT_TYPES.video:
         # CRC-код будет именем папки с временными файлами
         temp_folder_name = zlib.crc32(url.encode('utf-8'), 0)
         # открываем видео при помощи OpenCV

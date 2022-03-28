@@ -6,8 +6,8 @@ class storage:
     plugins_titles = []
     plugins_titles_to_names = {}
     plugins_settings = None # установленные настройки плагинов
-    plugins_prior_settings = None # предварительные настройки плагинов
-    process_mode = "all" # режим обработки, подробнее в классе PROCESS_MODES
+    favorite_plugins = [] # плагины в "избранном"
+    process_mode = "one" # режим обработки, подробнее в классе PROCESS_MODES
     process_actual_again = False # нужно ли обрабатывать повторно актуальные файлы
     opened_objects = [] # с 24.12.2021 только объекты (url, type, status [new, actual, in_process, irrelevant])
     current_object = None # текущий открытый объект
@@ -21,6 +21,8 @@ class storage:
     is_dragging = False # перетаскивание методом Drag&Drop
     zoom = 100 # степень увеличения/уменьшения
     crosshair = [False, None, None] # объект перекрестия. [0] - включен ли режим; [1] - кнопка; [2] - переменная плагина
+    node_links = [] # теги соединённых узлов
+    initial_nodes_id = [] # для id узлов типа "Изображение" и "Вывод"
 
     ### ДЛЯ ВИДЕО ###
     is_playing = False # воспроизводится ли видео
@@ -62,8 +64,6 @@ class storage:
             storage.plugins_titles_to_names = value
         if key == keys.PLUGINS_SETTINGS:
             storage.plugins_settings = value
-        if key == keys.PLUGINS_PRIOR_SETTINGS:
-            storage.plugins_prior_settings = value
         if key == keys.OPENED_OBJECTS:
             storage.opened_objects = value
         if key == keys.CURRENT_OBJECT:
@@ -111,18 +111,17 @@ class storage:
         storage.plugins_titles.append(key)
 
     @write_action
-    def set_prior_plugin_settings(key, value):
+    def set_2d_point_plugin_settings(key, value):
         if len(key) == 2:
-            storage.plugins_prior_settings[key[0]][key[1]] = value
+            storage.plugins_settings[key[0]][key[1]] = value
         if len(key) == 1:
-            storage.plugins_prior_settings[key[0]] = value
+            storage.plugins_settings[key[0]] = value
 
     @write_action
     def plugin_set_settings(name, new_settings):
         # new_settings - объект
         for key, value in new_settings.items():
             storage.plugins_settings[name][key] = value
-            storage.plugins_prior_settings[name][key] = value
 
     @write_action
     def append_object(value):
@@ -223,6 +222,31 @@ class storage:
 
     def reset_video_timer():
         storage.video_timer = 0
+
+    def add_plugin_to_favorites(title):
+        storage.favorite_plugins.append(title)
+
+    def delete_plugin_from_favorites(title):
+        storage.favorite_plugins.remove(title)
+
+    def add_to_node_links(node_links):
+        storage.node_links.append(node_links[0])
+        storage.node_links.append(node_links[1])
+
+    def remove_from_node_links(node_links):
+        storage.node_links.remove(node_links[0])
+        storage.node_links.remove(node_links[1])
+
+    def clear_initial_inputs():
+        storage.initial_nodes_id.clear()
+
+    def set_initial_input_id(input_id):
+        if not input_id in storage.initial_nodes_id:
+            storage.initial_nodes_id.append(input_id)
+
+    def set_initial_output_id(output_id):
+        if not output_id in storage.initial_nodes_id:
+            storage.initial_nodes_id.append(output_id)
 
 class OBJECT_TYPES:
     image = "image"

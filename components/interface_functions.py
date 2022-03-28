@@ -243,6 +243,16 @@ def close_all_menus():
                 dpg.hide_item(f"{item_alias}_move_handler")
                 dpg.hide_item(f"{item_alias}_handler")
 
+def open_plugins_window():
+    dpg.show_item("plugins_window")
+    dpg.configure_item("plugins_window", width=dpg.get_viewport_client_width(), height=dpg.get_viewport_client_height())
+    dpg.show_item("plugin_node_editor_registry")
+
+def open_warning_clear_desk():
+    dpg.show_item("warning_clear_desk")
+    pos = [(dpg.get_viewport_client_width() - 342) / 2, (dpg.get_viewport_client_height() - 142) / 2]
+    dpg.set_item_pos("warning_clear_desk", pos)
+
 def update_viewport_title():
     demo = ""
     filename = ""
@@ -278,11 +288,14 @@ def resize_viewport():
     dpg.set_item_width("player_pan", dpg.get_viewport_client_width() - 188 - minus_width)
     dpg.set_item_indent("player_buttons", (dpg.get_viewport_client_width() / 2 - minus_width) - 108)
 
+def open_file_explorer():
+    dpg.show_item("file_explorer_window") 
+    dpg.focus_item("search_field_input")
+
 def apply_opacity_to_video_player(opacity):
-    dpg.bind_item_theme("lock_button", themes.lock_button(opacity))
-    dpg.bind_item_theme("player_pan", themes.player_pan(opacity))
-    dpg.bind_item_theme("player_progress", themes.player_progress(opacity))
-    dpg.bind_item_theme("video_player_window", themes.player_window(opacity))
+    dpg.set_value("player_pan_theme", (255, 255, 255, opacity // 2))
+    dpg.set_value("player_progress_theme", (64, 149, 227, opacity))
+    dpg.set_value("player_window_theme", (0, 0, 0, opacity // 6.3))
     dpg.configure_item("skip_backward_button", tint_color=(255, 255, 255, opacity))
     dpg.configure_item("prev_frame_button", tint_color=(255, 255, 255, opacity))
     dpg.configure_item("play_button", tint_color=(255, 255, 255, opacity))

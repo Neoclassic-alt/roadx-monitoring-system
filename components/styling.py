@@ -18,9 +18,9 @@ def get_theme():
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (246, 246, 246), category=dpg.mvThemeCat_Core)
         #dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (29, 151, 236), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (56, 163, 236), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (154, 194, 242), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_TitleBgCollapsed, (154, 194, 242), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, (192, 229, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (165, 238, 203), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_TitleBgCollapsed, (165, 238, 203), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, (64, 227, 149), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, (168, 168, 255), category=dpg.mvThemeCat_Core)
         #dpg.add_theme_color(dpg.mvThemeCol_Button, (194, 194, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 255, 255), category=dpg.mvThemeCat_Core)
@@ -28,16 +28,16 @@ def get_theme():
         #dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (237, 245, 252), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (221, 236, 249), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (235, 235, 242), category=dpg.mvThemeCat_Core)
+        #dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (235, 235, 242), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (92, 190, 234), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, (194, 194, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, (168, 168, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Header, (194, 194, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Tab, (118, 118, 200), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, (154, 194, 242), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ResizeGrip, (154, 194, 242), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ResizeGripHovered, (194, 194, 255), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ResizeGripActive, (168, 168, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ResizeGrip, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ResizeGripHovered, (221, 236, 249), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ResizeGripActive, (64, 149, 227), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_DragDropTarget, (63, 12, 204), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Separator, (228, 228, 228), category=dpg.mvThemeCat_Core)
         
@@ -79,15 +79,19 @@ def get_theme():
 
     with dpg.theme_component(dpg.mvButton, parent=theme, enabled_state=False):
         #dpg.add_theme_color(dpg.mvThemeCol_Button, (198, 198, 198), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_Border, (160, 160, 160), category=dpg.mvThemeCat_Core)
+        #dpg.add_theme_color(dpg.mvThemeCol_Border, (160, 160, 160), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
         #dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (198, 198, 198), category=dpg.mvThemeCat_Core)
         #dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (198, 198, 198), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Text, (160, 160, 160), category=dpg.mvThemeCat_Core)
 
-    with dpg.theme_component(dpg.mvMenuItem, parent=theme, enabled_state=False):
-        dpg.add_theme_color(dpg.mvThemeCol_Text, (70, 70, 70), category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvImageButton, parent=theme, enabled_state=False):
+        dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
 
     return theme
 
@@ -135,7 +139,7 @@ def get_line_fill_theme(color):
 def get_crosshair_button_theme():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvImageButton, parent=theme):
-        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 6, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 8, 16, category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Button, (194, 194, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (155, 155, 255), category=dpg.mvThemeCat_Core)
@@ -300,42 +304,43 @@ def active_menu_item_theme():
         dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (221, 236, 249), category=dpg.mvThemeCat_Core)
     return theme
 
-def player_pan(opacity):
+def player_pan():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvChildWindow, parent=theme):
-        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (255, 255, 255, opacity), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (255, 255, 255, 122), category=dpg.mvThemeCat_Core, tag="player_pan_theme")
         dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 4, category=dpg.mvThemeCat_Core)
     return theme
 
-def player_window(opacity):
+def player_window():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvWindowAppItem, parent=theme):
-        dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (0, 0, 0, opacity // 6.3), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (0, 0, 0, 40), category=dpg.mvThemeCat_Core, tag="player_window_theme")
     with dpg.theme_component(dpg.mvImageButton, parent=theme):
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 6, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0, opacity), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (0, 0, 0, 20, opacity), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 0, 0, 40, opacity), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (0, 0, 0, 20), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 0, 0, 40), category=dpg.mvThemeCat_Core)
     return theme
 
-def lock_button(opacity):
+def lock_button():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvImageButton, parent=theme):
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0, opacity), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (0, 0, 0, 20, opacity), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 0, 0, 40, opacity), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (0, 0, 0, 20), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 0, 0, 40), category=dpg.mvThemeCat_Core)
     return theme
 
-def player_progress(opacity):
+def player_progress():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvChildWindow, parent=theme):
-        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (64, 149, 227, opacity), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (64, 149, 227), category=dpg.mvThemeCat_Core, 
+        tag="player_progress_theme")
     return theme
 
 def delete_button():
@@ -364,7 +369,7 @@ def window_theme():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvWindowAppItem, parent=theme):
         dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8, category=dpg.mvThemeCat_Core)
-        dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 10, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0, category=dpg.mvThemeCat_Core)
     return theme
 
 def search_field():
@@ -397,4 +402,98 @@ def thin_scrollbar():
     with dpg.theme_component(dpg.mvChildWindow, parent=theme):
         dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 10, category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
+    return theme
+
+def apply_plugins_button():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvChildWindow, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Border, (64, 149, 227), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 5, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvButton, parent=theme, enabled_state=False):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 5, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (164, 164, 164), category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvImageButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 13, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+    return theme
+
+def favourite_dismiss():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvImageButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (252, 237, 237), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 205, 205), category=dpg.mvThemeCat_Core)
+    return theme
+
+def favourite_add():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvImageButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (242, 251, 222), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (227, 242, 194), category=dpg.mvThemeCat_Core)
+    return theme
+
+def plugin_window():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.0, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 4, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvChildWindow, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 10, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
+    return theme
+
+def node_editor_style():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvAll, parent=theme):
+        dpg.add_theme_color(dpg.mvNodeCol_GridBackground, (42, 47, 65), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_GridLine, (56, 65, 94), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_style(dpg.mvNodeStyleVar_NodeBorderThickness, 0, category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBar, (26, 114, 194), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected, (249, 80, 80), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_NodeOutline, (26, 114, 194, 0), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (42, 47, 65), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 10, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (158, 158, 158), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_PopupRounding, 4, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (158, 158, 158), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (194, 194, 194), category=dpg.mvThemeCat_Core)
+    return theme
+
+def node_input():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvAll, parent=theme):
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBar, (143, 143, 143), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBarHovered, (191, 191, 191), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected, (249, 80, 80), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_NodeOutline, (26, 114, 194, 0), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_style(dpg.mvNodeStyleVar_NodeBorderThickness, 0, category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_style(dpg.mvNodeStyleVar_NodeCornerRounding, 8, category=dpg.mvThemeCat_Nodes)
+    return theme
+
+def node_output():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvAll, parent=theme):
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBar, (141, 194, 26), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected, (249, 80, 80), category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_style(dpg.mvNodeStyleVar_NodeBorderThickness, 0, category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_style(dpg.mvNodeStyleVar_NodeCornerRounding, 8, category=dpg.mvThemeCat_Nodes)
+        dpg.add_theme_color(dpg.mvNodeCol_NodeOutline, (26, 114, 194, 0), category=dpg.mvThemeCat_Nodes)
     return theme

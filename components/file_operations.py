@@ -42,7 +42,7 @@ def open_objects(sender, app_data, user_data):
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
         custom_components.set_file_current(storage.opened_objects[0]["url"])
-        pv.open_cv(**storage.current_object) # <- вот функция, где мы должны пойти дальше
+        pv.open_cv(storage.current_object)
 
     dpg.hide_item("hello_splash")
     dpg.show_item("group_of_objects")
@@ -83,7 +83,7 @@ def open_folder(sender, app_data):
     dpg.show_item("group_of_objects")
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
-        pv.open_cv(**storage.current_object)
+        pv.open_cv(storage.current_object)
     
 # получить информацию по объекту из его url
 def object_info(url):
@@ -99,7 +99,7 @@ def change_object(filename):
     custom_components.delete_file_current(storage.current_object["url"])
     storage.set_value(keys.CURRENT_OBJECT, object_info(filename))
     custom_components.set_file_current(storage.current_object["url"])
-    pv.open_cv(**storage.current_object)
+    pv.open_cv(storage.current_object)
 
 # сохранение объектов
 def save_all_files(sender, app_data):
@@ -233,7 +233,7 @@ def close_object(url=None):
             new_element = storage.opened_objects[index_of_elem]
             storage.set_value(keys.CURRENT_OBJECT, new_element)
             custom_components.set_file_current(new_element['url'])
-            pv.open_cv(**new_element)
+            pv.open_cv(new_element)
 
 def close_all_objects():
     if storage.current_object is None:

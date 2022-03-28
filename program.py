@@ -1,4 +1,3 @@
-from subprocess import call
 import dearpygui.dearpygui as dpg
 import json
 import components.utils as utils
@@ -22,9 +21,6 @@ storage.set_value(keys.PLUGINS, pm.load_plugins())
 
 # связываем заголовок плагина с его именем для нужд интерфейса
 pm.set_titles_to_names()
-
-def print_data(sender, app_data, user_data):
-    print(sender, app_data, user_data)
 
 # загрузка сохранённых настроек плагинов из файла settings.json
 with open("C:\ProgramData\cv_experiments\settings.json", "r", encoding='utf-8') as json_file:
@@ -84,17 +80,20 @@ with dpg.font_registry():
         dpg.add_font_range(0x2100, 0x214f)
         dpg.add_font_range(0x2010, 0x2015)
     utils.load_font(r"assets\fonts\NotoSans-Bold.ttf", 24, tag="title")
+    utils.load_font(r"assets\fonts\NotoSans-Regular.ttf", 22, tag="warning_title")
     utils.load_font(r"assets\fonts\NotoSans-Regular.ttf", 18, tag="mini_font")
     utils.load_font(r"assets\fonts\OpenSans-SemiBold.ttf", 20, tag="button_label")
-    utils.load_font(r"assets\fonts\NotoSans-Regular.ttf", 16, tag="micro_font")
+    utils.load_font(r"assets\fonts\OpenSans-Medium.ttf", 16, tag="node_items_font")
+    utils.load_font(r"assets\fonts\OpenSans-Italic.ttf", 18, tag="mini_italic")
+    utils.load_font(r"assets\fonts\OpenSans-MediumItalic.ttf", 16, tag="mini_node_italic")
 
 assets.get_assets()
 
 with dpg.handler_registry():
     dpg.add_mouse_release_handler(callback=pm.undragging)
-    dpg.add_key_press_handler(78, callback=lambda: dpg.show_item("settings_of_the_program"))
-    dpg.add_key_press_handler(65, callback=pm.apply_chain)
-    dpg.add_key_press_handler(80, callback=lambda: dpg.show_item("plugins_window"))
+    #dpg.add_key_press_handler(dpg.mvKey_Control, callback=lambda: dpg.show_item("settings_of_the_program"))
+    #dpg.add_key_press_handler(dpg.mvKey_Control, callback=pm.apply_chain)
+    #dpg.add_key_press_handler(dpg.mvKey_Control, callback=lambda: dpg.show_item("plugins_window"))
     dpg.add_mouse_release_handler(callback=inf.close_all_menus)
     dpg.add_mouse_move_handler(callback=lambda: storage.reset_video_timer())
     dpg.add_mouse_move_handler(callback=inf.set_close_all_button_default)
@@ -118,53 +117,99 @@ with dpg.item_handler_registry(tag="close_all_files_button_registry"):
 with dpg.item_handler_registry(tag="resize_window_handler"):
     dpg.add_item_resize_handler(callback=inf.resize_file_explorer_window)
 
-with dpg.window(label="Управление обработкой изображений и видео", show=False, autosize=True, pos=(300, 100), 
-tag="plugins_window", no_resize=True):
-    with dpg.group(horizontal=True, horizontal_spacing=12):
+with dpg.handler_registry(tag="plugin_node_editor_registry", show=False):
+    dpg.add_mouse_release_handler(callback=pm.get_selected_nodes)
+    dpg.add_key_press_handler(dpg.mvKey_Delete, callback=pm.delete_nodes_and_links)
+
+with dpg.window(label="Управление обработкой объектов", show=False, pos=(0, 0), tag="plugins_window", 
+width=827, height=516, min_size=(767, 350), on_close=lambda: dpg.hide_item("plugin_node_editor_registry")):
+    dpg.add_spacer(height=3)
+    with dpg.group(horizontal=True, horizontal_spacing=0):
+        dpg.add_spacer(width=10)
+        dpg.add_button(label="Добавить плагин", callback=lambda: dpg.show_item("add_plugins_window"))
+        dpg.add_button(label="Загрузить из файла")
+        dpg.add_button(label="Сохранить в файл", enabled=False, tag="save_to_file_button")
+        dpg.add_button(label="Очистить", enabled=False, tag="open_warning_clear_desk_button", 
+        callback=inf.open_warning_clear_desk)
+        dpg.add_button(label="Удалить", enabled=False, tag="delete_nodes_button", 
+        callback=pm.delete_nodes_and_links)
+        dpg.add_child_window(height=32, width=-194)
+        with dpg.child_window(tag="apply_plugin_button", height=32, width=184):
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Начать обработку", enabled=False)
+                dpg.add_image("button_separator")
+                dpg.add_image_button("expand")
+        dpg.bind_item_theme("apply_plugin_button", themes.apply_plugins_button())
+    dpg.add_spacer()
+    with dpg.child_window(tag="plugin_node_editor_window", horizontal_scrollbar=True):
+        dpg.bind_item_font("plugin_node_editor_window", "node_items_font")
+        with dpg.node_editor(tag="plugin_node_editor", width=2000, height=1000, 
+        callback=pm.link_nodes, delink_callback=pm.delink_node):
+            with dpg.node(label="Изображение", pos=(50, 50), tag="node_input_image"):
+                with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Output):
+                    dpg.add_text("Исходное изображение")
+                dpg.bind_item_theme("node_input_image", themes.node_input())
+            with dpg.node(label="Вывод", pos=(550, 300), tag="node_output_image"):
+                with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Input):
+                    dpg.add_text("Обработанное изображение")
+                dpg.bind_item_theme("node_output_image", themes.node_output())
+        dpg.bind_item_theme("plugin_node_editor_window", themes.node_editor_style())
+
+dpg.bind_item_theme("plugins_window", themes.window_theme())
+
+# Окно добавления плагина
+with dpg.window(label="Добавить плагин", show=False, pos=(300, 100), tag="add_plugins_window", 
+width=320, height=427, modal=True):
+    dpg.add_spacer(height=3)
+    dpg.add_text("Избранное", indent=20)
+    dpg.bind_item_font(dpg.last_item(), main_font)
+    with dpg.group(tag="list_of_favorites", indent=10):
+        dpg.bind_item_font("list_of_favorites", "mini_font")
+        dpg.bind_item_theme("list_of_favorites", themes.plugin_window())
+        dpg.add_text("Нет плагинов в избранном", indent=10, tag="no_plugins_in_favorites")
+        dpg.bind_item_font("no_plugins_in_favorites", "mini_italic")
+        dpg.add_text("В избранное можно добавлять не более 5 плагинов", indent=10, tag="no_more_5_plugins", 
+        color=(249, 80, 80), show=False, wrap=290)
+        for plugin_title in storage.plugins_titles:
+            cc.add_plugin_item(plugin_title, in_favorites_list=True)
+    dpg.add_spacer()
+    dpg.add_color_button((228, 228, 228), indent=20, width=286, height=1, no_border=True, no_drag_drop=True)
+    dpg.add_spacer(height=7)
+    with dpg.group(horizontal=True):
+        with dpg.child_window(tag="plugin_search_field", width=-46, height=32, no_scrollbar=True, indent=20):
+            with dpg.group(horizontal=True):
+                dpg.add_image("search_icon", indent=2)
+                dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1, 
+                callback=lambda s, d: dpg.set_value("plugin_list_filter", d))
         with dpg.group():
-            dpg.add_text("Плагины:")
-            dpg.add_listbox(storage.plugins_titles, default_value=storage.plugins_titles[0], tag="list_of_plugins", 
-            num_items=10, width=315, callback=pm.check_plugin, drag_callback=pm.drag_plugin, tracked=True)
-            with dpg.drag_payload(parent="list_of_plugins", drag_data=0, payload_type="plugin", tag="drop_plugin"):
-                dpg.add_text(dpg.get_value("list_of_plugins"), tag="drag_text")
-            with dpg.group(horizontal=True, tag="previous_warning_plugin", horizontal_spacing=3, show=False):
-                dpg.add_text("Для работы требуются другие плагины", indent=12)
-                dpg.add_image("help_img")
-                with dpg.tooltip(dpg.last_item()):
-                    dpg.add_text("Для использования данного плагина следует включить в цепочку перед ним "
-                    "другие плагины или их дубликаты:", 
-            tag="previous_warning_text", wrap=400)
-                    dpg.add_text("В списке плагинов все предшествующие плагины присуствуют", color=(70, 204, 40),
-                    tag="previous_plugins_state")
-                    dpg.add_group(tag="previous_warning_tooltip")
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=33)
-                dpg.add_button(label="Информация", callback=pm.more_plugin_info, tag="more_info_button", width=115)
-                dpg.add_button(label="Настройки", callback=pm.open_plugin_settings, tag="open_settings_button", width=105)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=33)
-                dpg.add_button(label="Дублировать", callback=pm.duplicate_plugin, width=120)
-                dpg.add_button(label="Удалить", callback=None, enabled=False, width=100, tag="delete_from_plugins_list_button")
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=33)
-                dpg.add_button(label="Добавить в цепочку плагинов", callback=pm.add_to_chain, tag="add_to_chain_of_plugins")
-        with dpg.group():
-            dpg.add_text("Цепочка плагинов:")
-            dpg.add_listbox([], tag="plugins_in_chain", num_items=10, width=315, payload_type="plugin",
-            drop_callback=lambda s, d: pm.add_to_chain(title=d), callback=pm.set_plugin_in_list)
-            with dpg.group():
-                with dpg.group(horizontal=True):
-                    dpg.add_spacer(width=30)
-                    dpg.add_button(label="Вверх", callback=lambda: pm.swap("up"), enabled=False, tag="swap_up_button")
-                    dpg.add_button(label="Вниз", callback=lambda: pm.swap("down"), enabled=False, tag="swap_down_button")
-                    dpg.add_button(label="Удалить", callback=pm.delete_from_chain, enabled=False, 
-                    tag="delete_from_chain_of_plugins_button")
-                with dpg.group(horizontal=True):
-                    dpg.add_spacer(width=30)
-                    dpg.add_button(label="Загрузить", width=115, callback=lambda: dpg.show_item("json_open_dialog"))
-                    dpg.add_button(label="Применить", width=115, callback=pm.apply_chain)
-                dpg.add_text("В демо-версии можно добавить не более 5 \nплагинов в цепочку", color=(230, 0, 0), 
-                show=False, tag="limit_5_plugins")
+            dpg.add_spacer()
+            dpg.add_image("help_img")
+    dpg.add_spacer(height=3)
+    with dpg.child_window(tag="list_of_plugins", indent=10, width=0, height=-10):
+        dpg.bind_item_font("list_of_plugins", "mini_font")
+        dpg.bind_item_theme("list_of_plugins", themes.plugin_window())
+        with dpg.filter_set(tag="plugin_list_filter"):
+            for plugin_title in storage.plugins_titles:
+                cc.add_plugin_item(plugin_title)
+    dpg.bind_item_theme("plugin_search_field", themes.search_field())
+
+dpg.bind_item_theme("add_plugins_window", themes.window_theme())
+
+with dpg.window(label="Предупреждение", show=False, pos=(0, 0), tag="warning_clear_desk", 
+width=342, height=142, no_title_bar=True, no_resize=True, no_move=True, modal=True):
+    dpg.add_spacer(height=3)
+    dpg.add_text("Вы уверены?", indent=20)
+    dpg.bind_item_font(dpg.last_item(), "warning_title")
+    dpg.add_text("Очистка редактора приведёт к удалению всех плагинов и связей между ними.", wrap=320, indent=20)
+    dpg.add_spacer(height=2)
+    with dpg.group(horizontal=True, indent=170):
+        dpg.add_button(label="Удалить", tag="clear_desk_button", callback=pm.clear_desk)
+        dpg.bind_item_theme("clear_desk_button", themes.delete_button())
+        dpg.bind_item_font("clear_desk_button", "button_label")
+        dpg.add_button(label="Отмена", tag="cancel_clear_button", callback=lambda: dpg.hide_item("warning_clear_desk"))
+        dpg.bind_item_theme("cancel_clear_button", themes.cancel_button())
+
+dpg.bind_item_theme("warning_clear_desk", themes.window_theme())
 
 with dpg.window(label="Добавить URL", show=False, width=600, height=400, tag="add_urls_window"):
     dpg.add_text("Добавьте URL (с новой строки):")
@@ -235,7 +280,7 @@ with dpg.window(tag="objects_window"):
         dpg.bind_item_theme("file_button", themes.default_button_theme())
         dpg.bind_item_handler_registry("file_button", file_button_registry)
 
-        dpg.add_button(label="Обработка")
+        dpg.add_button(label="Обработка", callback=inf.open_plugins_window)
 
         with dpg.child_window(label="Приложение", tag="app_button", height=32, width=130):
             dpg.add_spacer(height=2)
@@ -274,7 +319,7 @@ with dpg.window(tag="objects_window"):
                 dpg.add_image_button("prev_file_inactive", tag="prev_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
                 dpg.add_image_button("more_files_inactive", tag="more_files_button", enabled=False, 
-                callback=lambda: dpg.show_item("file_explorer_window"))
+                callback=inf.open_file_explorer)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
                 dpg.add_image_button("next_file_inactive", tag="next_file_button", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.blue_button_square_theme())
@@ -351,20 +396,20 @@ no_title_bar=True, width=560, height=90, tag="video_player_window", user_data={"
         dpg.add_image_button("skip_forward", tag="skip_forward_button", callback=pv.go_to_end)
     with dpg.group(horizontal=True):
         dpg.add_image_button("locked", tag="lock_button")
-        dpg.bind_item_theme("lock_button", themes.lock_button(255))
+        dpg.bind_item_theme("lock_button", themes.lock_button())
         dpg.add_text("0:00", color=(255, 255, 255), tag="time_video_from_begin")
         dpg.add_spacer()
         with dpg.group():
             dpg.add_spacer(height=8)
             dpg.add_child_window(width=420, height=9, tag="player_pan")
-            dpg.bind_item_theme("player_pan", themes.player_pan(255))
+            dpg.bind_item_theme("player_pan", themes.player_pan())
             dpg.bind_item_handler_registry("player_pan", "pan_handler_registry")
         dpg.add_spacer()
         dpg.add_text("0:00", color=(255, 255, 255), tag="video_duration")
     dpg.add_child_window(width=1, height=9, tag="player_progress", pos=(98, 70))
-    dpg.bind_item_theme("player_progress", themes.player_progress(255))
+    dpg.bind_item_theme("player_progress", themes.player_progress())
     dpg.bind_item_handler_registry("player_progress", "pan_handler_registry")
-dpg.bind_item_theme("video_player_window", themes.player_window(255))
+dpg.bind_item_theme("video_player_window", themes.player_window())
 
 ### Раскрывающиеся окна "Файл" и "Приложение"
 with dpg.window(label="Файл", show=False, pos=(8, 48), no_title_bar=True, no_move=True, 
@@ -422,12 +467,12 @@ no_move=True, tag="warning_of_delete_window", show=False):
 dpg.bind_item_theme("warning_of_delete_window", themes.window_shadow())
 
 with dpg.window(label="Просмотр открытых файлов", width=440, height=420, pos=(200, 100), 
-tag="file_explorer_window", show=False, min_size=(288, 252)):
+tag="file_explorer_window", show=False, min_size=(288, 252), delay_search=True):
     with dpg.child_window(tag="search_field", width=-10, height=32, no_scrollbar=True, indent=10):
         with dpg.group(horizontal=True):
             dpg.add_image("search_icon", indent=2)
             dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1,
-            callback=lambda s, d: dpg.set_value("file_filter_container", d))
+            callback=lambda s, d: dpg.set_value("file_filter_container", d), tag="search_field_input")
     dpg.bind_item_theme("search_field", themes.search_field())
     dpg.add_spacer(height=4)
     with dpg.child_window(height=-48, tag="file_container", indent=10):
@@ -522,8 +567,8 @@ dpg.bind_theme(themes.get_theme())
 dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 
 dpg.show_style_editor()
-dpg.show_debug()
-dpg.show_metrics()
+#dpg.show_debug()
+#dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
 dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
