@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 import components.utils as utils
 import components.photo_video as pv
-from components.storage import storage
+from components.storage import OBJECT_STATUSES, storage
 from components.storage import keys
 from components.storage import OBJECT_TYPES
 import os
@@ -42,13 +42,11 @@ def set_titles_to_names():
     for key in list(storage.plugins.keys()):
         storage.set_titles_to_names(storage.plugins[key]['info']['title'], key)
 
-def set_plugin_settings(sender):
-    current_plugin_label = dpg.get_item_label(dpg.get_item_parent(dpg.get_item_parent(sender)))
-    current_plugin = storage.plugins_titles_to_names[current_plugin_label]
-    storage.set_plugin_settings(current_plugin, storage.plugins_settings[current_plugin])
-    #with open('C:\ProgramData\cv_experiments\settings.json', 'w') as write_file:
-    #    json.dump(storage.plugins_settings, write_file, indent=4, ensure_ascii=True)
-    # обновление настроек
+def set_plugin_settings(sender, value, current_var):
+    current_node = dpg.get_item_parent(dpg.get_item_parent(sender))
+    current_plugin_label = dpg.get_item_label(current_node)
+    storage.set_plugin_settings(f"{current_plugin_label}##{current_node}", current_var, value)
+
     if not storage.current_object is None:
         if storage.current_object['type'] == OBJECT_TYPES.image:
             pv.open_cv(storage.current_object)
@@ -109,39 +107,58 @@ def open_plugins_window():
     dpg.show_item("plugins_window")
 
 def apply_chain():
+    create_chain()
+    # начинаем вносить плагины в список
     if storage.current_object['type'] in (OBJECT_TYPES.image, OBJECT_TYPES.url):
         pv.open_cv(storage.current_object)
     if storage.current_object['type'] == OBJECT_TYPES.video:
-        if dpg.get_value("apply_to_all_frames"):
+        if storage.all_frames:
             pv.process_all_frames()
         pv.open_frame(storage.current_frame)
-    storage.set_value(keys.PROCESSED, True)
+    storage.set_status(OBJECT_STATUSES.actual)
 
 # загрузка "тяжёлых" данных
 def load_heavy(plugin, parameters, single_image=True):
-    need_load = False
-    filtered_load = list(filter(lambda x: x['name'] == plugin, storage.data_loads))
-    if len(filtered_load) == 0:
-        need_load = True
-    if len(filtered_load) == 1 and filtered_load[0]['need_load']:
-        storage.edit_need_load(plugin, False)
-        need_load = True
-    # загрузим данные
-    if need_load:
-        dpg.show_item("state_of_loading")
-        dpg.set_value("text_of_loading", "Загрузка плагина...")
-        heavy = storage.plugins[plugin]['payload'](parameters)
-        if len(filtered_load) == 0:
-            storage.new_data_load(plugin, heavy)
-        #dpg.hide_item("state_of_loading")
-        if not single_image or storage.current_frame == 0:
-            if len(storage.chain_of_plugins) == 1:
-                dpg.set_value("text_of_loading", "Применение плагина к кадрам")
-            if len(storage.chain_of_plugins) > 1:
-                dpg.set_value("text_of_loading", "Применение плагинов к кадрам")
-        return heavy
+    dpg.show_item("state_of_loading")
+    dpg.show_item("loading_indicator")
+    dpg.hide_item("progress_bar")
+    dpg.hide_item("status_bar_info")
+    dpg.hide_item("time_evaluation")
+    dpg.set_value("text_of_loading", "Загрузка плагина...")
+    heavy = storage.plugins[plugin]['payload'](parameters)
+    #dpg.hide_item("state_of_loading")
+    if not single_image or storage.current_frame == 0:
+        if len(storage.chain_of_plugins) == 1:
+            dpg.set_value("text_of_loading", "Применение плагина к кадрам")
+        if len(storage.chain_of_plugins) > 1:
+            dpg.set_value("text_of_loading", "Применение плагинов к кадрам")
+    return heavy
+
+def create_chain():
+    chain_of_plugins = []
+    current_node = 'node_input_image'
+    next_node = None
+    node_plugins = storage.node_plugins
+    while next_node != 'node_output_image':
+        current_node, next_node = [link for link in node_plugins if link[0] == current_node][0]
+        if next_node != 'node_output_image':
+            chain_of_plugins.append(next_node)
+            current_node = next_node
+    chain_of_plugins = list(map(lambda plugin: f"{dpg.get_item_label(plugin)}##{plugin}", chain_of_plugins))
+    storage.set_value(keys.CHAIN_OF_PLUGINS, chain_of_plugins)
+    print(storage.chain_of_plugins)
+
+def toggle_node_settings(sender, app_data, user_data):
+    if user_data["closed"]:
+        dpg.show_item(user_data["plugin_settings_id"])
+        user_data["closed"] = False
+        dpg.set_item_label(sender, "Скрыть")
     else:
-        return filtered_load[0]['object']
+        dpg.hide_item(user_data["plugin_settings_id"])
+        user_data["closed"] = True
+        dpg.set_item_label(sender, "Раскрыть")
+    dpg.set_item_user_data(sender, user_data)
+    print(user_data)
 
 def add_plugin(label):
     x_scroll = dpg.get_x_scroll("plugin_node_editor_window")
@@ -149,46 +166,31 @@ def add_plugin(label):
     pos_x = content_region_avail[0] / 2 + x_scroll
     current_plugin = storage.plugins_titles_to_names[label]
     interface = storage.plugins[current_plugin].get('interface')
-    plugin_settings = storage.plugins_settings[current_plugin]
-    with dpg.node(label=label, pos=(pos_x, 0), parent="plugin_node_editor"):
+    payload = storage.plugins[current_plugin].get('payload')
+    with dpg.node(label=label, pos=(pos_x, 50), parent="plugin_node_editor") as plugin_id:
+        storage.add_plugin(f"{label}##{plugin_id}", not payload is None) # добавляем словарь по имени
+        with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static):
+            with dpg.group(horizontal=True) as id_group:
+                dpg.add_text(f"ID: {plugin_id}")
+        with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static) as plugin_settings:
+            if not interface is None:
+                cc.add_plugin_settings(interface, name=current_plugin, title=f"{label}##{plugin_id}")
+            else:
+                dpg.add_text("Нет настроек")
+                dpg.bind_item_font(dpg.last_item(), "mini_node_italic")
+        dpg.add_button(label="Скрыть", user_data={"closed": False, "plugin_settings_id": plugin_settings}, 
+            callback=toggle_node_settings, parent=id_group)
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Input):
             dpg.add_text("Ввод")
-        with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static):
-            if not interface is None:
-                cc.add_plugin_settings(interface, current_plugin, plugin_settings)
-            else:
-                dpg.add_text("У этого плагина нет настроек")
-                dpg.bind_item_font(dpg.last_item(), "mini_node_italic")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Output):
-            dpg.add_text("Результат обработки")
-        dpg.enable_item("save_to_file_button")
+            with dpg.group(horizontal=True):
+                plugin_info = storage.plugins[current_plugin]["info"]
+                if not plugin_info.get("display") is None and "video_data" in plugin_info["display"]:
+                    dpg.add_image("graph")
+                dpg.add_text("Результат обработки")
+        #dpg.enable_item("save_to_file_button")
         dpg.enable_item("open_warning_clear_desk_button")
    
-#def delete_from_chain():
-#    plugin_title = dpg.get_value("plugins_in_chain")
-#    if plugin_title:
-#        storage.set_value(keys.CHAIN_OF_PLUGINS, 
-#        list(filter(lambda x: x != plugin_title, storage.chain_of_plugins)))
-#        dpg.configure_item("plugins_in_chain", items=storage.chain_of_plugins)
-#    if not storage.current_object is None:
-#        pv.open_cv(**storage.current_object)
-#    if len(storage.chain_of_plugins) != 0:
-#        dpg.configure_item("plugins_in_chain", default_value=storage.chain_of_plugins[0])
-#    check_plugin(None, dpg.get_value("list_of_plugins"), None)
-
-# проверка плагина при нажатии на него в списке плагинов
-#def check_plugin(sender, app_data, user_data):
-#    show_previous(sender, app_data, user_data)
-#    set_enable_delete_button(sender, app_data, user_data)
-#    check_exist_in_chain(sender, app_data, user_data)
-    ## Check have interface
-#    plugin_name = storage.plugins_titles_to_names[app_data]
-#    plugin = storage.plugins[plugin_name]
-#    if plugin['interface'] is None:
-#        dpg.disable_item("open_settings_button")
-#    else:
-#        dpg.enable_item("open_settings_button")
-
 # Необходимо показать текст с предшествующими плагинами, если таковые есть
 def show_previous(sender, app_data, user_data):
     plugin_name = storage.plugins_titles_to_names[app_data]
@@ -261,15 +263,10 @@ def drag_plugin():
 def undragging():
     storage.is_dragging = False
 
-# позволяет при нажатии на плагин в цепочке плагинов изменять выбор в списке плагинов
-#def set_plugin_in_list(sender, app_data, user_data):
-#    dpg.set_value("list_of_plugins", app_data)
-#    check_plugin(sender, app_data, user_data)
-
 def get_mouse_pos():
     mouse_pos = dpg.get_mouse_pos(local=False)
     window_pos = dpg.get_item_pos("main_image_child_window")
-    y_scroll = dpg.get_y_scroll("objects_window")
+    y_scroll = dpg.get_y_scroll("main_image_child_window")
     x_scroll = dpg.get_x_scroll("main_image_child_window")
     dpg.set_value("image_mouse_tooltip_text", f"({int(mouse_pos[0] - window_pos[0] + x_scroll)}, \
 {int(mouse_pos[1] - window_pos[1] + y_scroll)})")
@@ -278,13 +275,15 @@ def get_mouse_pos():
 def set_2d_point_values():
     mouse_pos = dpg.get_mouse_pos(local=False)
     window_pos = dpg.get_item_pos("main_image_child_window")
-    y_scroll = dpg.get_y_scroll("objects_window")
+    y_scroll = dpg.get_y_scroll("main_image_child_window")
     x_scroll = dpg.get_x_scroll("main_image_child_window")
-    #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
-    dpg.hide_item("image_handler_registry")
-    dpg.bind_item_theme(storage.crosshair[1], themes.get_crosshair_button_theme())
-    current_plugin = storage.plugins_titles_to_names[dpg.get_value("list_of_plugins")]
-    storage.set_prior_plugin_settings([current_plugin, storage.crosshair[2]], 
+    #dpg.hide_item("image_handler_registry")
+    item_handlers = dpg.get_item_children("image_handler_registry", slot=1)
+    dpg.hide_item(item_handlers[0])
+    dpg.hide_item(item_handlers[1])
+    dpg.show_item("plugins_window")
+    dpg.bind_item_theme(storage.crosshair[1], "get_crosshair_button_theme")
+    storage.set_plugin_settings(storage.crosshair[2]["plugin_title"], storage.crosshair[2]["var"], 
     [mouse_pos[0] - window_pos[0] + x_scroll, mouse_pos[1] - window_pos[1] + y_scroll])
     dpg.delete_item("image_mouse_tooltip")
     # назначить соответствующие значения инпутам
@@ -299,18 +298,21 @@ def set_crosshair_mode(sender, app_data, user_data):
     if len(storage.opened_objects) == 0:
         return
     if storage.crosshair[0] == False:
+        dpg.hide_item("plugins_window")
         pv.zoom("100")
-        dpg.bind_item_theme(sender, themes.get_green_crosshair_button_theme())
+        dpg.bind_item_theme(sender, "get_green_crosshair_button_theme")
         dpg.add_tooltip("main_image_desk", tag="image_mouse_tooltip")
         dpg.add_text("(0, 0)", parent="image_mouse_tooltip", tag="image_mouse_tooltip_text")
-        #dpg.bind_item_handler_registry("main_image_desk", "image_handler_registry")
-        dpg.show_item("image_handler_registry")
+        item_handlers = dpg.get_item_children("image_handler_registry", slot=1)
+        dpg.show_item(item_handlers[0])
+        dpg.show_item(item_handlers[1])
         storage.set_value(keys.CROSSHAIR, [True, sender, user_data])
     else:
-        dpg.bind_item_theme(sender, themes.get_crosshair_button_theme())
+        dpg.bind_item_theme(sender, "get_crosshair_button_theme")
         dpg.delete_item("image_mouse_tooltip")
-        #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
-        dpg.hide_item("image_handler_registry")
+        item_handlers = dpg.get_item_children("image_handler_registry", slot=1)
+        dpg.hide_item(item_handlers[0])
+        dpg.hide_item(item_handlers[1])
         storage.set_value(keys.CROSSHAIR, [False, None, None])
 
 def clear_desk():
@@ -333,6 +335,7 @@ def clear_desk():
     #storage.set_initial_nodes(node_input_image, node_output_image)
     dpg.disable_item("open_warning_clear_desk_button")
     dpg.disable_item("save_to_file_button")
+    dpg.disable_item("begin_processing_button")
     dpg.hide_item("warning_clear_desk")
     storage.clear_initial_inputs()
 
@@ -340,12 +343,22 @@ def link_nodes(sender, app_data):
     if not app_data[0] in storage.node_links and not app_data[1] in storage.node_links:
         node_link = dpg.add_node_link(app_data[0], app_data[1], parent=sender)
         storage.add_to_node_links(app_data)
+        storage.add_to_node_plugins(dpg.get_item_parent(app_data[0]), dpg.get_item_parent(app_data[1]))
         dpg.set_item_user_data(node_link, app_data)
+    count_of_links = len(dpg.get_item_children("plugin_node_editor", slot=0))
+    count_of_nodes = len(dpg.get_item_children("plugin_node_editor", slot=1))
+    if count_of_links == count_of_nodes - 1 and not storage.current_object is None:
+        dpg.enable_item("begin_processing_button")
+    #print(storage.plugins_settings)
+    #print(storage.plugins_titles_to_names)
+    #print(storage.plugins_titles)
 
 def delink_node(sender, app_data):
     node_data = dpg.get_item_user_data(app_data)
     dpg.delete_item(app_data)
     storage.remove_from_node_links(node_data)
+    storage.remove_from_node_plugins(dpg.get_item_parent(node_data[0]), dpg.get_item_parent(node_data[1]))
+    dpg.disable_item("begin_processing_button")
 
 def get_selected_nodes():
     selected_nodes = dpg.get_selected_nodes("plugin_node_editor")
@@ -380,7 +393,10 @@ def delete_nodes_and_links():
     selected_nodes = dpg.get_selected_nodes("plugin_node_editor")
     selected_links = dpg.get_selected_links("plugin_node_editor")
     for link in selected_links:
+        node_data = dpg.get_item_user_data(link)
         dpg.delete_item(link)
+        storage.remove_from_node_links(node_data)
+        storage.remove_from_node_plugins(dpg.get_item_parent(node_data[0]), dpg.get_item_parent(node_data[1]))
 
     for node in selected_nodes:
         if len(storage.initial_nodes_id) > 0 and storage.initial_nodes_id[0] == node:
@@ -392,3 +408,4 @@ def delete_nodes_and_links():
         dpg.delete_item(node)
 
     dpg.disable_item("delete_nodes_button")
+    dpg.disable_item("begin_processing_button")

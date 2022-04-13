@@ -1,2 +1,3 @@
 **/*.pyc
 yolov5*
+components/test.py

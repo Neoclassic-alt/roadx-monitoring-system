@@ -16,7 +16,7 @@ def edit_image(img, parameters, app_info):
 
     additional_data = app_info.get("additional_data")
     #print(additional_data)
-    text = [x for x in additional_data if x["plugin"] == 'Распознавание светофоров'][0]['text'].split('\n')
+    text = [x for x in additional_data if x["plugin"].startswith('Распознавание светофоров')][0]['text'].split('\n')
     our_traffic_light = text[parameters["traffic_light_number"] - 1]
     rectangle = re.match(r'Левая верхняя точка: \((\d+), (\d+)\), правая нижняя точка: \((\d+), (\d+)\)', our_traffic_light)
 

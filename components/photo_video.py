@@ -1,12 +1,12 @@
 import dearpygui.dearpygui as dpg
 import cv2
 import numpy as np
-from components.storage import storage
+from components.storage import OBJECT_STATUSES, storage
 from components.storage import keys
 import components.plugin_manager as pm
 import components.file_operations as fo
 import components.interface_functions as inf
-import components.custom_components as custom_components
+import components.custom_components as cc
 import zlib
 import os
 import shutil
@@ -50,36 +50,42 @@ def get_temp_folder_name(url):
 def process_image(data, single_image=True, index=None):
     """Пояснения к параметрам:
     data - изображение OpenCV
-    single_image - режимо обработки: одно изображение или все кадры
+    single_image - режим обработки: одно изображение или все кадры
     index - индекс обрабатываемого фрейма"""
-    if single_image and not dpg.get_value("apply_to_all_frames"):
+    if single_image and not storage.all_frames:
         if len(storage.chain_of_plugins) == 1:
             dpg.set_value("text_of_loading", "Применение плагина...")
         elif len(storage.chain_of_plugins) > 1:
             dpg.set_value("text_of_loading", "Применение плагинов...")
     process_times = []
     for plugin_title in storage.chain_of_plugins:
-        plugin = storage.plugins_titles_to_names[plugin_title]
+        plugin = storage.plugins_titles_to_names[plugin_title.rpartition('##')[0]]
         heavy = None
-        ready = None
-        parameters = storage.plugins_settings.get(plugin)
-        if not storage.plugins[plugin]['payload'] is None:
+        parameters = storage.plugins_settings.get(plugin_title)
+        if parameters['need_load']:
             dpg.hide_item("progress_bar")
-            heavy = pm.load_heavy(plugin, parameters, single_image)
+            heavy = pm.load_heavy(plugin, parameters["settings"], single_image)
+            storage.edit_need_load(plugin_title, heavy)
+        else:
+            heavy = parameters["payload"]
         dpg.show_item("progress_bar")
+        dpg.hide_item("loading_indicator")
         dpg.show_item("state_of_loading")
+        dpg.show_item("time_evaluation")
         mode = "all"
-        if not dpg.get_value("apply_to_all_frames"):
+        if not storage.all_frames:
             mode = "one"
         app_info = {"heavy": heavy, "frame_rate": storage.frame_rate, "frame_index": index, 
         'type': storage.current_object['type'], 'mode': mode}
         start = time.perf_counter()
+        #print("Add_data: ", storage.additional_data)
         if not storage.additional_data.get(index) is None and len(storage.additional_data[index]) >= 1 and not index is None:
             app_info["additional_data"] = storage.additional_data[index]
         if index is None and not storage.additional_data.get(0) is None and len(storage.additional_data[0]) >= 1:
             app_info["additional_data"] = storage.additional_data[0]
         apply = storage.plugins[plugin]['transform']
-        ready = apply(data, parameters, app_info)
+        ready = None
+        ready = apply(data, parameters["settings"], app_info)
         data = ready['image']
         if not ready.get('additional_data') is None and not index is None:
             storage.add_additional_data(index, {'text': ready['additional_data'], 'plugin': plugin_title})
@@ -93,7 +99,7 @@ def process_image(data, single_image=True, index=None):
     return data
 
 # открыть новые объекты при помощи OpenCV
-def open_cv(object):
+def open_cv(object, activate=False):
     data = None
     url = object["url"]
     object_type = object["type"]
@@ -117,9 +123,9 @@ def open_cv(object):
         dpg.hide_item("video_player_window")
         dpg.hide_item("close_and_delete_temp_files")
         dpg.disable_item("close_and_delete_temp_files")
-        if storage.current_object is None:
-            custom_components.enable_menu_item("save_image_menu_item")
-            custom_components.enable_menu_item("save_all_images_menu_item")
+        if activate:
+            cc.enable_menu_item("save_image_menu_item")
+            cc.enable_menu_item("save_all_images_menu_item")
         #show_additional_data()
     if object_type in OBJECT_TYPES.video:
         # CRC-код будет именем папки с временными файлами
@@ -131,7 +137,6 @@ def open_cv(object):
         if (length_of_video / frame_rate) > 60 and storage.demo:
             dpg.show_item("limit_1_minute")
             dpg.hide_item("state_of_loading")
-            dpg.show_item("status_bar_info")
             return
         storage.set_value(keys.FRAME_RATE, frame_rate)
         temp_frames_folder = r"C:/ProgramData/cv_experiments/temp_frames"
@@ -142,6 +147,7 @@ def open_cv(object):
             dpg.show_item("state_of_loading")
             dpg.hide_item("loading_indicator")
             dpg.show_item("progress_bar")
+            dpg.hide_item("status_bar_info")
             os.mkdir(temp_folder_path)
 
             count_of_frames = 0
@@ -152,7 +158,7 @@ def open_cv(object):
                 cv2.imwrite(f"{temp_folder_path}/{count_of_frames}.jpg", frame, (cv2.IMWRITE_JPEG_QUALITY, 
                 storage.program_settings["quality_of_pictures"]))
                 count_of_frames += 1
-                dpg.set_value("text_of_loading", f"Открытие видео...")
+                dpg.set_value("text_of_loading", f"Открытие видео")
                 dpg.set_value("progress_bar", count_of_frames / length_of_video)
             cap.release()
             if storage.program_settings["send_signal"]:
@@ -176,16 +182,23 @@ def open_cv(object):
         dpg.show_item("video_player_window")
         dpg.show_item("close_and_delete_temp_files")
         dpg.enable_item("close_and_delete_temp_files")
-        if storage.current_object is None:
-            custom_components.enable_menu_item("save_image_menu_item")
-            custom_components.enable_menu_item("save_all_frames_menu_item")
-            custom_components.enable_menu_item("save_video_menu_item")
+        if activate:
+            cc.enable_menu_item("save_image_menu_item")
+            cc.enable_menu_item("save_all_frames_menu_item")
+            cc.enable_menu_item("save_video_menu_item")
     dpg.show_item("main_image_child_window")
-    if storage.current_object is None:
-        custom_components.enable_menu_item("close_menu_item")
-        custom_components.enable_menu_item("close_all_menu_item")
+    if activate:
+        cc.enable_menu_item("close_menu_item")
+        cc.enable_menu_item("close_all_menu_item")
+        count_of_links = len(dpg.get_item_children("plugin_node_editor", slot=0))
+        count_of_nodes = len(dpg.get_item_children("plugin_node_editor", slot=1))
+        if count_of_links == count_of_nodes - 1:
+            dpg.enable_item("begin_processing_button")
+    dpg.enable_item("expand_modes_button")
+    dpg.hide_item("expand_tooltip")
     inf.update_status_bar_info()
     inf.update_viewport_title()
+    dpg.show_item("status_bar_info")
 
 # загрузить изображение с Интернета
 def get_image_from_url(url):
@@ -222,8 +235,9 @@ def open_frame(frame_index):
 
     temp_folder_name = get_temp_folder_name(url)
     temp_frames_folder = TEMP_FRAMES_FOLDER
-    #if len(storage.chain_of_plugins) and dpg.get_value("apply_to_all_frames") and storage.processed:
-    #    temp_frames_folder = TEMP_PROCESSING_FRAMES_FOLDER
+    if len(storage.chain_of_plugins) and storage.all_frames and \
+    storage.current_object["status"] == OBJECT_STATUSES.actual:
+        temp_frames_folder = TEMP_PROCESSING_FRAMES_FOLDER
     temp_folder_path = rf"{temp_frames_folder}/{temp_folder_name}"
 
     if frame_index == storage.total_frames - 1:
@@ -235,9 +249,9 @@ def open_frame(frame_index):
     #    storage.clear_additional_data()
     #dpg.delete_item("additional_text_group", children_only=True)
 
-    #if len(storage.chain_of_plugins) and not dpg.get_value("apply_to_all_frames"):
-    #    data = process_image(data)
-    #    dpg.hide_item("state_of_loading")
+    if len(storage.chain_of_plugins) and not storage.all_frames:
+        data = process_image(data)
+        dpg.hide_item("state_of_loading")
 
     #if storage.is_playing:
     #    dpg.hide_item("additional_text")
@@ -269,6 +283,8 @@ def process_all_frames():
     if not os.path.isdir(temp_folder_processing_path):
         os.mkdir(temp_folder_processing_path)
 
+    dpg.show_item("state_of_loading")
+    dpg.hide_item("loading_indicator")
     if len(storage.chain_of_plugins) == 1:
         dpg.set_value("text_of_loading", "Применение плагина к кадрам")
     if len(storage.chain_of_plugins) > 1:
@@ -277,7 +293,6 @@ def process_all_frames():
     storage.clear_video_data()
     storage.clear_time_data()
 
-    dpg.show_item("state_of_loading")
     for i in range(storage.total_frames):
         data = cv2.imread(f"{temp_folder_path}/{i}.jpg") # чтение из основной папки
         data = process_image(data, i == storage.current_frame, index=i)
@@ -286,12 +301,21 @@ def process_all_frames():
         dpg.set_value("progress_bar", i / storage.total_frames)
 
     dpg.hide_item("state_of_loading")
-    dpg.hide_item("progress_bar")
 
-    dpg.delete_item("video_data_group", children_only=True)
-    if storage.program_settings["display_video_process"]:
+    dpg.delete_item("video_plots_group", children_only=True)
+    dpg.configure_item("plots_combo", items=["(Нет)"])
+
+    if storage.program_settings["display_video_process"] and len(storage.video_data) > 0:
+        print(storage.video_data)
         inf.create_plots()
-        dpg.show_item("video_data")
+        cc.enable_button("information_button", "information_button_text")
+        dpg.hide_item("no_plots_text")
+        dpg.show_item("red_point_image")
+        dpg.set_item_width("information_button", 124)
+        dpg.show_item("plot_combo_group")
+    else:
+        dpg.show_item("no_plots_text")
+        dpg.hide_item("plot_combo_group")
     
     if storage.program_settings["send_signal"]:
         beepy.beep(sound='ready')

@@ -43,7 +43,7 @@ def manage_all_headers(signal):
 def create_plots():
     for plugin_title, video_data in storage.video_data.items():
         video_data = storage.video_data[plugin_title]
-        plugin = storage.plugins_titles_to_names[plugin_title]
+        plugin = storage.plugins_titles_to_names[plugin_title.rpartition('##')[0]]
         plugin_info = storage.plugins[plugin]['info']
         x_axis_label = plugin_info.get('x_axis_label')
         y_axis_label = plugin_info.get('y_axis_label')
@@ -52,11 +52,13 @@ def create_plots():
         series_colors = plugin_info.get('series_colors')
         smoothing = plugin_info.get('smoothing')
 
-        # создать кнопки
-        dpg.add_button(label=plugin_title, parent="plot_buttons", user_data=plugin_title, callback=open_plugin_window)
+        # создать пункты комбоменю
+        items = dpg.get_item_configuration("plots_combo")["items"]
+        items.append(plugin_title)
+        dpg.configure_item("plots_combo", items=items)
 
         # создать график(и)
-        plot = dpg.add_plot(label=plugin_title, height=250, width=375, parent="video_data_group", no_mouse_pos=True)
+        plot = dpg.add_plot(label=plugin_title, height=250, width=375, parent="video_plots_group", no_mouse_pos=True)
         dpg.add_plot_axis(dpg.mvXAxis, label=x_axis_label, parent=plot)
         y_axis = dpg.add_plot_axis(dpg.mvYAxis, label=y_axis_label, parent=plot)
         line_series_parameters = {}
@@ -110,9 +112,9 @@ def create_plots():
                     dpg.bind_item_theme(dpg.last_item(), themes.get_line_fill_theme(series_colors[i]))
 
     # графики скорости обработки
-    dpg.add_button(label="Скорость обработки плагинами", parent="plot_buttons", user_data="Скорость обработки плагинами", callback=open_plugin_window)
-    plot = dpg.add_plot(label="Скорость обработки плагинами", height=250, width=375, parent="video_data_group", no_mouse_pos=True)
-    x_axis = dpg.add_plot_axis(dpg.mvXAxis, label='Номер кадра', parent=plot)
+    #dpg.add_button(label="Скорость обработки плагинами", parent="plot_buttons", user_data="Скорость обработки плагинами", callback=open_plugin_window)
+    plot = dpg.add_plot(label="Скорость обработки плагинами", height=250, width=375, parent="video_plots_group", no_mouse_pos=True)
+    dpg.add_plot_axis(dpg.mvXAxis, label='Номер кадра', parent=plot)
     #dpg.add_plot_legend(parent=plot)
     y_axis = dpg.add_plot_axis(dpg.mvYAxis, label='Время обработки, с', parent=plot)
     x_series = list(range(storage.total_frames))
@@ -141,15 +143,18 @@ def create_plots():
     dpg.add_plot_annotation(label=total_time_text, default_value=(storage.total_frames - 1, sum_last_plugin), 
     offset=(-15, -15), color=(113, 226, 0, 150), parent=plot, clamped=False)
 
-def open_plugin_window(sender, app_data, user_data):
+def open_plugin_window(sender):
     dpg.show_item("plugin_window")
     dpg.delete_item("plugin_window", children_only=True)
-    children = dpg.get_item_children("video_data_group", slot=1)
+    children = dpg.get_item_children("video_plots_group", slot=1)
+    plot_label = dpg.get_value(sender)
+    if plot_label == "(Нет)":
+        return
     plot_item = None
     for child in children:
-        if dpg.get_item_configuration(child)['label'] == user_data:
+        if dpg.get_item_configuration(child)['label'] == plot_label:
             plot_item = child
-    dpg.add_plot(label=user_data, width=750, height=500, tag="plot_in_window", parent="plugin_window", no_mouse_pos=True)
+    dpg.add_plot(label=plot_label, width=750, height=500, tag="plot_in_window", parent="plugin_window", no_mouse_pos=True)
     children = dpg.get_item_children(plot_item)
     plotx_configuration = dpg.get_item_configuration(children[1][0])
     ploty_configuration = dpg.get_item_configuration(children[1][1])
@@ -168,44 +173,27 @@ def open_plugin_window(sender, app_data, user_data):
             dpg.add_stem_series(x=value[0], y=value[1], label=series['label'], parent=y_axis)
         dpg.bind_item_theme(dpg.last_item(), theme)
 
-def set_hover_state(name):
-    dpg.bind_item_theme(name, themes.hover_button_theme())
-
-def set_active_state(name):
-    dpg.bind_item_theme(name, themes.active_button_theme())
-
-def set_default_state(name):
-    dpg.bind_item_theme(name, themes.default_button_theme())
-
-def buttonize(name, callback):
+def buttonize(name, callback, disabled=False):
     with dpg.item_handler_registry(tag=f"{name}_handler") as handler_registry:
-        dpg.add_item_hover_handler(callback=lambda: set_hover_state(name))
-        dpg.add_item_active_handler(callback=lambda: set_active_state(name))
-        dpg.add_item_active_handler(callback=callback)
+        dpg.add_item_hover_handler(callback=lambda: dpg.bind_item_theme(name, "hover_button_theme"), 
+        show=not disabled)
+        dpg.add_item_active_handler(callback=lambda: dpg.bind_item_theme(name, "active_button_theme"),
+        show=not disabled)
+        dpg.add_item_active_handler(callback=callback, show=not disabled)
 
-    callback = lambda: set_default_state(name)
-    with dpg.handler_registry(tag=f"{name}_move_handler"):
-        dpg.add_mouse_move_handler(callback=callback)
+    with dpg.handler_registry(tag=f"{name}_move_handler", show=not disabled):
+        dpg.add_mouse_move_handler(callback=lambda: dpg.bind_item_theme(name, "default_button_theme"))
 
     return handler_registry
 
-def set_hover_menu_item_state(name):
-    dpg.bind_item_theme(name, themes.hover_menu_item_theme())
-
-def set_active_menu_item_state(name):
-    dpg.bind_item_theme(name, themes.active_menu_item_theme())
-
-def set_default_menu_item_state(name):
-    dpg.bind_item_theme(name, themes.default_menu_item_theme())
-
 def buttonize_menu_item(name, callback):
-    with dpg.item_handler_registry(tag=f"{name}_handler", show=False) as handler_registry:
-        dpg.add_item_hover_handler(callback=lambda: set_hover_menu_item_state(name))
-        dpg.add_item_active_handler(callback=lambda: set_active_menu_item_state(name))
+    with dpg.item_handler_registry(tag=f"{name}_handler") as handler_registry:
+        dpg.add_item_hover_handler(callback=lambda: dpg.bind_item_theme(name, "hover_menu_item_theme"))
+        dpg.add_item_active_handler(callback=lambda: dpg.bind_item_theme(name, "active_menu_item_theme"))
         dpg.add_item_active_handler(callback=callback)
 
     with dpg.handler_registry(tag=f"{name}_move_handler", show=False):
-        dpg.add_mouse_move_handler(callback=lambda: set_default_menu_item_state(name))
+        dpg.add_mouse_move_handler(callback=lambda: dpg.bind_item_theme(name, "default_menu_item_theme"))
 
     return handler_registry
 
@@ -216,7 +204,6 @@ def open_file_menu():
             if dpg.get_item_user_data(file_menu_item)["disabled"] == False:
                 item_alias = dpg.get_item_alias(file_menu_item)
                 dpg.show_item(f"{item_alias}_move_handler")
-                dpg.show_item(f"{item_alias}_handler")
 
 def open_app_menu():
     dpg.show_item("app_menu_window")
@@ -224,7 +211,6 @@ def open_app_menu():
         if dpg.get_item_type(app_menu_item) == "mvAppItemType::mvChildWindow":
             item_alias = dpg.get_item_alias(app_menu_item)
             dpg.show_item(f"{item_alias}_move_handler")
-            dpg.show_item(f"{item_alias}_handler")
 
 def close_all_menus():
     if not dpg.get_item_state("file_button")["hovered"]:
@@ -234,24 +220,39 @@ def close_all_menus():
                 if dpg.get_item_user_data(file_menu_item)["disabled"] == False:
                     item_alias = dpg.get_item_alias(file_menu_item)
                     dpg.hide_item(f"{item_alias}_move_handler")
-                    dpg.hide_item(f"{item_alias}_handler")
     if not dpg.get_item_state("app_button")["hovered"]:
         dpg.hide_item("app_menu_window")
         for app_menu_item in dpg.get_item_children("app_menu", slot=1):
             if dpg.get_item_type(app_menu_item) == "mvAppItemType::mvChildWindow":
                 item_alias = dpg.get_item_alias(app_menu_item)
                 dpg.hide_item(f"{item_alias}_move_handler")
-                dpg.hide_item(f"{item_alias}_handler")
+    if not dpg.get_item_state("expand_modes_button")["hovered"]:
+        dpg.hide_item("modes_of_processing_window")
+        for app_menu_item in dpg.get_item_children("app_menu", slot=1):
+            if dpg.get_item_type(app_menu_item) == "mvAppItemType::mvChildWindow":
+                item_alias = dpg.get_item_alias(app_menu_item)
+                dpg.hide_item(f"{item_alias}_move_handler")
 
 def open_plugins_window():
     dpg.show_item("plugins_window")
-    dpg.configure_item("plugins_window", width=dpg.get_viewport_client_width(), height=dpg.get_viewport_client_height())
+    dpg.configure_item("plugins_window", width=dpg.get_viewport_client_width(), height=dpg.get_viewport_client_height() - 36)
     dpg.show_item("plugin_node_editor_registry")
+    dpg.configure_item("expand_window", pos=(dpg.get_viewport_client_width() - 70, dpg.get_viewport_client_height() - 70))
+
+def open_add_plugin_window():
+    dpg.show_item("add_plugins_window")
+    pos = [(dpg.get_item_width("plugins_window") - dpg.get_item_width("add_plugins_window")) / 2, 
+    (dpg.get_item_height("plugins_window") - dpg.get_item_height("add_plugins_window")) / 2]
+    dpg.set_item_pos("add_plugins_window", pos)
 
 def open_warning_clear_desk():
     dpg.show_item("warning_clear_desk")
-    pos = [(dpg.get_viewport_client_width() - 342) / 2, (dpg.get_viewport_client_height() - 142) / 2]
+    pos = [(dpg.get_item_width("plugins_window") - 342) / 2, (dpg.get_item_height("plugins_window") - 142) / 2]
     dpg.set_item_pos("warning_clear_desk", pos)
+
+def resize_node_plugins_window():
+    dpg.configure_item("expand_window", pos=(dpg.get_item_width("plugins_window") - 50, 
+    dpg.get_item_height("plugins_window") - 50))
 
 def update_viewport_title():
     demo = ""
@@ -307,8 +308,22 @@ def apply_opacity_to_video_player(opacity):
 
 def set_close_all_button_default():
     if not dpg.get_item_state("close_all_files_button")["hovered"]:
-        dpg.bind_item_theme("close_all_files_button", themes.close_all_objects_button_default())
+        dpg.bind_item_theme("close_all_files_button", "close_all_objects_button_default")
 
 def resize_file_explorer_window():
     file_explorer_width = dpg.get_item_width("file_explorer_window")
     dpg.set_item_width("spacer_between_help_and_close_button", file_explorer_width/2 - 156)
+
+def open_processing_modes_window():
+    dpg.show_item("modes_of_processing_window")
+    window_width = dpg.get_item_width("plugins_window")
+    dpg.configure_item("modes_of_processing_window", pos=(window_width - 274, 120))
+    for mode_menu_item in dpg.get_item_children("modes_of_processing", slot=1):
+        if dpg.get_item_type(mode_menu_item) == "mvAppItemType::mvChildWindow":
+            item_alias = dpg.get_item_alias(mode_menu_item)
+            dpg.show_item(f"{item_alias}_move_handler")
+
+def open_information_window():
+    dpg.show_item("information_window")
+    dpg.hide_item("red_point_image")
+    dpg.set_item_width("information_button", 116)

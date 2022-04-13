@@ -5,15 +5,17 @@ class storage:
     plugins = None
     plugins_titles = []
     plugins_titles_to_names = {}
-    plugins_settings = None # установленные настройки плагинов
+    plugins_settings = {} # установленные настройки плагинов
     favorite_plugins = [] # плагины в "избранном"
+
+    all_frames = False
     process_mode = "one" # режим обработки, подробнее в классе PROCESS_MODES
     process_actual_again = False # нужно ли обрабатывать повторно актуальные файлы
     opened_objects = [] # с 24.12.2021 только объекты (url, type, status [new, actual, in_process, irrelevant])
     current_object = None # текущий открытый объект
     chain_of_plugins = [] # цепочка плагинов
     current_file_field_tag = {'item': None, 'var': None} # для сохранения имени файлового поля
-    data_loads = [] # хранитель "тяжёлых" объектов. 
+    #data_loads = [] # хранитель "тяжёлых" объектов. 
     # Формат: {'name': имя плагина, 'object': объект, 'need_load': нужна ли перезагрузка}
     additional_data = {} # дополнительная текстовая информация
     current_data = np.zeros(2000 * 2000 * 4)
@@ -21,7 +23,9 @@ class storage:
     is_dragging = False # перетаскивание методом Drag&Drop
     zoom = 100 # степень увеличения/уменьшения
     crosshair = [False, None, None] # объект перекрестия. [0] - включен ли режим; [1] - кнопка; [2] - переменная плагина
+
     node_links = [] # теги соединённых узлов
+    node_plugins = [] # теги соединённых плагинов
     initial_nodes_id = [] # для id узлов типа "Изображение" и "Вывод"
 
     ### ДЛЯ ВИДЕО ###
@@ -37,6 +41,12 @@ class storage:
 
     program_settings = {"quality_of_pictures": 85, "auto_apply": False, "send_signal": True, 
     "display_image_process": True, "display_video_process": True}
+
+    ### ПРОГРЕСС ###
+    is_processing = False # начинается ли загрузка
+    is_divisible = False # можно ли поделить процесс на множество мелких частей
+    processed_time = 0 # кол-во секунд с начала загрузки
+    part_of_process = 0 # часть загрузки от 0 до 1
 
     actions = []
 
@@ -96,10 +106,18 @@ class storage:
             storage.crosshair = value
         if key == keys.VIDEO_TIMER:
             storage.video_timer = value
+        if key == keys.PROCESS_MODE:
+            storage.process_mode = value
+        if key == keys.ALL_FRAMES:
+            storage.all_frames = value
 
     @write_action
-    def set_plugin_settings(key, value):
-        storage.plugins_settings[key] = value
+    def add_plugin(key, need_load):
+        storage.plugins_settings[key] = {"settings": {}, "need_load": need_load, "payload": None}
+
+    @write_action
+    def set_plugin_settings(plugin, key, value):
+        storage.plugins_settings[plugin]["settings"][key] = value
 
     @write_action
     def set_plugin_settings_field(key, field, value):
@@ -111,11 +129,13 @@ class storage:
         storage.plugins_titles.append(key)
 
     @write_action
-    def set_2d_point_plugin_settings(key, value):
-        if len(key) == 2:
-            storage.plugins_settings[key[0]][key[1]] = value
-        if len(key) == 1:
-            storage.plugins_settings[key[0]] = value
+    def set_2d_point_settings(plugin, key, value, var=None):
+        if var == 'x':
+            storage.plugins_settings[plugin][key][0] = value
+        if var == 'y':
+            storage.plugins_settings[plugin][key][0] = value
+        if var is None:
+            storage.plugins_settings[plugin][key] = value
 
     @write_action
     def plugin_set_settings(name, new_settings):
@@ -150,13 +170,8 @@ class storage:
 
     @write_action
     def edit_need_load(plugin_name, value):
-        index = list(map(lambda i: i['name'], storage.data_loads)).index(plugin_name)
-        storage.data_loads[index]['need_load'] = value
-
-    @write_action
-    def new_data_load(plugin_name, object_):
-        storage.data_loads.append({'name': plugin_name, 'object': object_, 'need_load': False})
-        # все равно данные будут загружены, и значение 'need_load' пойдёт в False
+        storage.plugins_settings[plugin_name]["payload"] = value
+        storage.plugins_settings[plugin_name]["need_load"] = False
 
     @write_action
     def add_additional_data(index, data):
@@ -199,23 +214,23 @@ class storage:
     def get_actions():
         return storage.actions
 
-    @write_action
-    def add_plugin(plugin, name, title, settings):
+    #@write_action
+    #def add_plugin(plugin, name, title, settings):
         # plugin - объект плагина
-        storage.plugins[name] = plugin
-        storage.plugins_titles.append(title)
-        storage.plugins_titles_to_names[title] = name
-        storage.plugins_settings[name] = copy.deepcopy(settings)
-        storage.plugins_prior_settings[name] = copy.deepcopy(settings)
+    #    storage.plugins[name] = plugin
+    #    storage.plugins_titles.append(title)
+    #    storage.plugins_titles_to_names[title] = name
+    #    storage.plugins_settings[name] = copy.deepcopy(settings)
+    #    storage.plugins_prior_settings[name] = copy.deepcopy(settings)
 
-    @write_action
-    def delete_plugin(plugin, name, title):
+    #@write_action
+    #def delete_plugin(plugin, name, title):
         # plugin - объект плагина
-        del storage.plugins[name]
-        del storage.plugins_titles[title]
-        del storage.plugins_titles_to_names[title]
-        del storage.plugins_settings[name]
-        del storage.plugins_prior_settings[name]
+    #    del storage.plugins[name]
+    #    del storage.plugins_titles[title]
+    #    del storage.plugins_titles_to_names[title]
+    #    del storage.plugins_settings[name]
+    #    del storage.plugins_prior_settings[name]
 
     def add_to_video_timer(value):
         storage.video_timer += value
@@ -237,6 +252,18 @@ class storage:
         storage.node_links.remove(node_links[0])
         storage.node_links.remove(node_links[1])
 
+    def clear_node_links():
+        storage.node_links.clear()
+
+    def add_to_node_plugins(node_plugin1, node_plugin2):
+        storage.node_plugins.append([node_plugin1, node_plugin2])
+
+    def remove_from_node_plugins(node_plugin1, node_plugin2):
+        storage.node_plugins.remove([node_plugin1, node_plugin2])
+
+    def clear_node_plugins():
+        storage.node_plugins.clear()
+
     def clear_initial_inputs():
         storage.initial_nodes_id.clear()
 
@@ -247,6 +274,20 @@ class storage:
     def set_initial_output_id(output_id):
         if not output_id in storage.initial_nodes_id:
             storage.initial_nodes_id.append(output_id)
+
+    def set_status(new_status):
+        index = storage.opened_objects.index(storage.current_object)
+        storage.opened_objects[index]['status'] = new_status
+        storage.current_object[index] = new_status
+
+    def process_timer_to_zero():
+        storage.is_processing = False
+        storage.is_divisible = False
+        storage.processed_time = 0
+        storage.part_of_process = 0
+
+    def add_to_process_timer(frame_time):
+        storage.processed_time += frame_time
 
 class OBJECT_TYPES:
     image = "image"
@@ -282,6 +323,12 @@ class keys:
     PROCESSED = "processed"
     CROSSHAIR = "crosshair"
     VIDEO_TIMER = "video_timer"
+    PROCESS_MODE = "process_mode"
+    ALL_FRAMES = "all_frames"
+    IS_PROCESSING = "is_processing"
+    IS_DIVISIBLE = "is_divisible"
+    PROCESSED_TIME = "processed_time"
+    PART_OF_PROCESS = "part_of_process"
 
 class OBJECT_STATUSES:
     new = "new"

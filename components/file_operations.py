@@ -42,7 +42,7 @@ def open_objects(sender, app_data, user_data):
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
         custom_components.set_file_current(storage.opened_objects[0]["url"])
-        pv.open_cv(storage.current_object)
+        pv.open_cv(storage.current_object, activate=True)
 
     dpg.hide_item("hello_splash")
     dpg.show_item("group_of_objects")
@@ -101,101 +101,6 @@ def change_object(filename):
     custom_components.set_file_current(storage.current_object["url"])
     pv.open_cv(storage.current_object)
 
-# сохранение объектов
-def save_all_files(sender, app_data):
-    common_info = {
-        "file_path": app_data['file_path_name'],
-        "image_format": dpg.get_value("image_format"),
-        "video_format": dpg.get_value("video_format"),
-        "set_program_name": dpg.get_value("set_program_name"),
-        "program_name": dpg.get_value("program_name")
-        #"save_without_plugin": dpg.get_value("save_without_plugin")
-    }
-    number_of_threads = dpg.get_value("number_of_threads")
-    queue = Queue() # создаём очередь обработки
-    
-    # Запускаем потом и очередь
-    for i in range(number_of_threads):
-        t = FileSaver(i + 1, queue, storage.plugins, storage.plugins_settings, common_info)
-        t.setDaemon(True)
-        t.start()
-    
-    # Даем очереди нужные нам ссылки для скачивания
-    for i, object_ in enumerate(storage.opened_objects):
-        queue.put({**object_, 'i': i})
-
-    # удаление обработанных файлов
-    if dpg.get_value("close_all_files"):
-        #AppInfo.opened_objects.clear()
-        storage.clear_opened_objects()
-        #AppInfo.current_object = None
-        storage.set_value(keys.CURRENT_OBJECT, None)
-        dpg.configure_item("combo_of_objects", items=())
-        dpg.delete_item("main_image")
-        dpg.delete_item("main_image_desk")
-        dpg.hide_item("group_of_objects")
-
-class FileSaver(Thread):
-    def __init__(thread_number, queue, plugins, plugins_settings, common_info):
-        Thread.__init__()
-        AppInfo.thread_number = thread_number
-        AppInfo.queue = queue
-        AppInfo.common_info = common_info
-        AppInfo.plugins = plugins
-        AppInfo.plugins_settings = plugins_settings
-
-        AppInfo.start_time = None
-
-    def run():
-        while True:
-            # Получаем url из очереди
-            object_ = AppInfo.queue.get()
-
-            AppInfo.start_time = time.perf_counter_ns()
-
-            # Сохраняем файл
-            AppInfo.save_file(object_, **AppInfo.common_info)
-            
-            # Отправляем сигнал о том, что задача завершена
-            AppInfo.queue.task_done()
-
-    # сохраняет один объект
-    def save_file(object_, file_path, image_format = 'png', video_format = 'mp4', 
-    set_program_name = False, program_name = None):
-        if object_['type'] == OBJECT_TYPES.image:
-            if set_program_name == "Исходные имена":
-                filename = file_path + '\\' + object_['url'].rpartition('\\')[-1].rpartition('.')[0] + '.' + image_format
-            if set_program_name == "Программное имя":
-                if program_name.find('$'):
-                    filename = file_path + '\\' + program_name.replace('$', str(object_['i'] + 1)) + '.' + image_format
-                else:
-                    return
-            AppInfo.save_cv(object_['url'], OBJECT_TYPES.image, filename, object_['plugin'])
-        if object_['type'] == OBJECT_TYPES.url:
-            if set_program_name == "Исходные имена":
-                filename = file_path + '\\' + object_['url'].rpartition('/')[-1].rpartition('.')[0] + '.' + image_format
-            if set_program_name == "Программное имя":
-                if program_name.find('$'):
-                    filename = file_path + '\\' + program_name.replace('$', str(object_['i'] + 1)) + '.' + image_format
-                else:
-                    return
-            AppInfo.save_cv(object_['url'], OBJECT_TYPES.url, filename, object_['plugin'])
-
-        # сохранить объект при помощи OpenCV
-    def save_cv(url, type, filename, plugin = None):
-        data = None
-        if type == storage.OBJECT_TYPES.image:
-            data = cv2.imread(url)
-        if type == storage.OBJECT_TYPES.url:
-            data = AppInfo.get_image_from_url(url)
-        if len(storage.chain_of_plugins) > 0:
-            data = AppInfo.process_image(data)
-        cv2.imwrite(filename, data, (cv2.IMWRITE_JPEG_QUALITY, storage.program_settings["quality_of_pictures"]))
-        end_time = time.perf_counter_ns()
-        
-        results.append([AppInfo.thread_number, filename, plugin, AppInfo.start_time, end_time, end_time - AppInfo.start_time])
-
-
 def close_object(url=None):
     length = len(storage.opened_objects)
     if length == 0:
@@ -216,6 +121,7 @@ def close_object(url=None):
         dpg.delete_item(f"file_{search_url}_handler")
         dpg.delete_item(f"file_{search_url}_move_handler")
         dpg.delete_item(dpg.get_item_parent(f"file_{search_url}"))
+        dpg.disable_item("begin_processing_button")
     
     if length > 1:
         index_of_elem = tuple(map(lambda x: x['url'], storage.opened_objects)) \
@@ -251,3 +157,4 @@ def close_all_objects():
     dpg.hide_item("main_image_child_window")
     dpg.hide_item("video_player")
     dpg.show_item("hello_splash")
+    dpg.disable_item("begin_processing_button")
