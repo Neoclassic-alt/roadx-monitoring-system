@@ -112,7 +112,8 @@ def create_plots():
                     dpg.bind_item_theme(dpg.last_item(), themes.get_line_fill_theme(series_colors[i]))
 
     # графики скорости обработки
-    #dpg.add_button(label="Скорость обработки плагинами", parent="plot_buttons", user_data="Скорость обработки плагинами", callback=open_plugin_window)
+    items = dpg.get_item_configuration("plots_combo")["items"]
+    items.append("Скорость обработки плагинами")
     plot = dpg.add_plot(label="Скорость обработки плагинами", height=250, width=375, parent="video_plots_group", no_mouse_pos=True)
     dpg.add_plot_axis(dpg.mvXAxis, label='Номер кадра', parent=plot)
     #dpg.add_plot_legend(parent=plot)
@@ -238,6 +239,7 @@ def open_plugins_window():
     dpg.configure_item("plugins_window", width=dpg.get_viewport_client_width(), height=dpg.get_viewport_client_height() - 36)
     dpg.show_item("plugin_node_editor_registry")
     dpg.configure_item("expand_window", pos=(dpg.get_viewport_client_width() - 70, dpg.get_viewport_client_height() - 70))
+    dpg.hide_item("video_player_window")
 
 def open_add_plugin_window():
     dpg.show_item("add_plugins_window")

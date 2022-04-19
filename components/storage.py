@@ -110,6 +110,14 @@ class storage:
             storage.process_mode = value
         if key == keys.ALL_FRAMES:
             storage.all_frames = value
+        if key == keys.IS_PROCESSING:
+            storage.is_processing = value
+        if key == keys.IS_DIVISIBLE:
+            storage.is_divisible = value
+        if key == keys.PROCESSED_TIME:
+            storage.processed_time = value
+        if key == keys.PART_OF_PROCESS:
+            storage.part_of_process = value
 
     @write_action
     def add_plugin(key, need_load):
@@ -280,9 +288,12 @@ class storage:
         storage.opened_objects[index]['status'] = new_status
         storage.current_object[index] = new_status
 
-    def process_timer_to_zero():
+    def process_is_finished():
         storage.is_processing = False
         storage.is_divisible = False
+        storage.process_timer_to_zero()
+
+    def process_timer_to_zero():
         storage.processed_time = 0
         storage.part_of_process = 0
 

@@ -82,9 +82,6 @@ def get_theme():
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
 
-    #with dpg.theme_component(dpg.mvTooltip, parent=theme):
-    #    dpg.add_theme_style()
-
     return theme
 
 def null_padding_primary_window():
@@ -351,6 +348,12 @@ def window_theme():
             dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0, category=dpg.mvThemeCat_Core)
 
+def window_rounding():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvWindowAppItem, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8, category=dpg.mvThemeCat_Core)
+    return theme
+
 def search_field():
     theme = dpg.add_theme()
     with dpg.theme_component(dpg.mvChildWindow, parent=theme):
@@ -538,6 +541,11 @@ def combo_style():
         dpg.add_theme_style(dpg.mvStyleVar_PopupRounding, 8, category=dpg.mvThemeCat_Core)
     return theme
 
+def popup_style():
+    with dpg.theme(tag="popup_style"):
+        with dpg.theme_component(dpg.mvAll):
+            dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (246, 246, 246), category=dpg.mvThemeCat_Core)
+
 ######
 
 def launch_themes():
@@ -554,3 +562,4 @@ def launch_themes():
     default_button_theme()
     hover_button_theme()
     active_button_theme()
+    popup_style()

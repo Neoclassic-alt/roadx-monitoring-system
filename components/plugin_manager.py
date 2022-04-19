@@ -146,7 +146,7 @@ def create_chain():
             current_node = next_node
     chain_of_plugins = list(map(lambda plugin: f"{dpg.get_item_label(plugin)}##{plugin}", chain_of_plugins))
     storage.set_value(keys.CHAIN_OF_PLUGINS, chain_of_plugins)
-    print(storage.chain_of_plugins)
+    return chain_of_plugins
 
 def toggle_node_settings(sender, app_data, user_data):
     if user_data["closed"]:
@@ -158,7 +158,6 @@ def toggle_node_settings(sender, app_data, user_data):
         user_data["closed"] = True
         dpg.set_item_label(sender, "Раскрыть")
     dpg.set_item_user_data(sender, user_data)
-    print(user_data)
 
 def add_plugin(label):
     x_scroll = dpg.get_x_scroll("plugin_node_editor_window")
@@ -172,6 +171,10 @@ def add_plugin(label):
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static):
             with dpg.group(horizontal=True) as id_group:
                 dpg.add_text(f"ID: {plugin_id}")
+                dpg.bind_item_font(dpg.last_item(), "node_items_font")
+                warning_image = dpg.add_image("node_warning", show=False)
+                dpg.add_tooltip(warning_image)
+                dpg.bind_item_font(id_group, "tooltip_font")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static) as plugin_settings:
             if not interface is None:
                 cc.add_plugin_settings(interface, name=current_plugin, title=f"{label}##{plugin_id}")
@@ -179,7 +182,8 @@ def add_plugin(label):
                 dpg.add_text("Нет настроек")
                 dpg.bind_item_font(dpg.last_item(), "mini_node_italic")
         dpg.add_button(label="Скрыть", user_data={"closed": False, "plugin_settings_id": plugin_settings}, 
-            callback=toggle_node_settings, parent=id_group)
+            callback=toggle_node_settings, parent=id_group, before=warning_image, show=not interface is None)
+        dpg.bind_item_font(dpg.last_item(), "node_items_font")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Input):
             dpg.add_text("Ввод")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Output):
@@ -190,39 +194,8 @@ def add_plugin(label):
                 dpg.add_text("Результат обработки")
         #dpg.enable_item("save_to_file_button")
         dpg.enable_item("open_warning_clear_desk_button")
+    show_previous()
    
-# Необходимо показать текст с предшествующими плагинами, если таковые есть
-def show_previous(sender, app_data, user_data):
-    plugin_name = storage.plugins_titles_to_names[app_data]
-    plugin = storage.plugins[plugin_name]
-    previous_list = plugin['info'].get("previous")
-    titles_of_previous_plugins = []
-    titles_of_missing_plugins = []
-    if not previous_list is None:
-        dpg.show_item("previous_warning_plugin")
-        for previous in previous_list:
-            title_of_plugin = storage.plugins[previous]['info'].get('title')
-            if not title_of_plugin is None:
-                titles_of_previous_plugins.append(storage.plugins[previous]['info']['title'])
-            else:
-                titles_of_previous_plugins.append(previous)
-        for title in titles_of_previous_plugins:
-            clean_title = title
-            if title.find('#') != -1:
-                clean_title = title.rpartition(' #')[0]
-            if not clean_title in storage.chain_of_plugins:
-                titles_of_missing_plugins.append(clean_title)
-        if len(titles_of_missing_plugins):
-            dpg.delete_item("previous_warning_tooltip", children_only=True)
-            for title in titles_of_missing_plugins:
-                dpg.add_text(title, color=(255, 0, 0), bullet=True, parent="previous_warning_tooltip")
-            dpg.hide_item("previous_plugins_state")
-        else:
-            dpg.delete_item("previous_warning_tooltip", children_only=True)
-            dpg.show_item("previous_plugins_state")
-    else:
-        dpg.hide_item("previous_warning_plugin")
-
 def open_chain_from_file(sender, app_data, user_data):
     file_path = app_data["file_path_name"]
     with open(file_path, "r", encoding="utf-8") as json_file:
@@ -349,9 +322,6 @@ def link_nodes(sender, app_data):
     count_of_nodes = len(dpg.get_item_children("plugin_node_editor", slot=1))
     if count_of_links == count_of_nodes - 1 and not storage.current_object is None:
         dpg.enable_item("begin_processing_button")
-    #print(storage.plugins_settings)
-    #print(storage.plugins_titles_to_names)
-    #print(storage.plugins_titles)
 
 def delink_node(sender, app_data):
     node_data = dpg.get_item_user_data(app_data)
@@ -409,3 +379,65 @@ def delete_nodes_and_links():
 
     dpg.disable_item("delete_nodes_button")
     dpg.disable_item("begin_processing_button")
+    show_previous()
+
+### Проверка всех плагинов на наличие предыдущих
+def show_previous():
+    chain_of_plugins = []
+    children_of_desk = dpg.get_item_children("plugin_node_editor", slot=1)
+    for node in children_of_desk:
+        if not dpg.get_item_alias(node) in ("node_input_image", "node_output_image"):
+            chain_of_plugins.append(dpg.get_item_label(node) + "##" + str(node))
+    previous = {} # с каждого плагина соберём информацию о предыдущих
+    previous_titles = {} # имена предыдущих плагинов
+    previous_exist = {} # имеются ли предыдущие плагины или нет
+    for plugin in chain_of_plugins:
+        plugin_title = plugin.rpartition('##')[0]
+        plugin_name = storage.plugins_titles_to_names[plugin_title]
+        plugin_previous = storage.plugins[plugin_name]["info"].get("previous")
+        previous[plugin] = plugin_previous
+    for plugin, previous_plugins in previous.items():
+        if previous_plugins is None:
+            continue
+        exist = []
+        plugins_titles = []
+        for plugin_name in previous_plugins:
+            plugin_title = storage.plugins[plugin_name]["info"]["title"]
+            plugins_titles.append(plugin_title)
+            need_plugins = [x for x in chain_of_plugins if x.startswith(plugin_title)]
+            exist.append(bool(len(need_plugins)))
+        previous_exist[plugin] = exist
+        previous_titles[plugin] = plugins_titles
+    for plugin_title, results in previous_exist.items():
+        node_id = int(plugin_title.rpartition('##')[2])
+        node_attribute = dpg.get_item_children(node_id, slot=1)[0]
+        node_group = dpg.get_item_children(node_attribute, slot=1)[0]
+        node_items = dpg.get_item_children(node_group, slot=1)
+        dpg.delete_item(node_items[3], children_only=True)
+
+        dpg.show_item(node_items[2])
+        dpg.add_spacer(parent=node_items[3])
+        if results.count(True) == len(results):
+            dpg.configure_item(node_items[2], texture_tag="node_check")
+            dpg.add_text("Все предыдущие плагины на месте", parent=node_items[3], indent=5)
+        else:
+            dpg.configure_item(node_items[2], texture_tag="node_warning")
+            dpg.add_text("Не хватает предыдущих плагинов: ", parent=node_items[3], indent=5)
+
+        exist_flag = False # хоть один предыдущий плагин присутствует
+
+        for i, result in enumerate(results):
+            if not result:
+                dpg.add_text(previous_titles[plugin_title][i] + "  ", bullet=True, color=(250, 137, 137), 
+                parent=node_items[3], indent=5)
+            else:
+                exist_flag = True
+        
+        if exist_flag:
+            dpg.add_spacer(parent=node_items[3])
+            dpg.add_text("Имеющиеся плагины: ", parent=node_items[3], indent=5)
+            for i, result in enumerate(results):
+                if result:
+                    dpg.add_text(previous_titles[plugin_title][i] + "  ", bullet=True, parent=node_items[3], indent=5)
+
+        dpg.add_spacer(parent=node_items[3])

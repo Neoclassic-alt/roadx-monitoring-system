@@ -8,10 +8,11 @@ from common.functions import intersect_detecting
 # функция, непосредственно обрабатывающая изображение
 def edit_image(img, parameters, app_info):
     additional_data = app_info["additional_data"]
-    persons = [x for x in additional_data if x['plugin'] == 'Распознавание людей']
+    print(additional_data)
+    persons = [x for x in additional_data if x['plugin'].startswith('Распознавание людей')]
     pedestrian_crossings = [x for x in additional_data if x['plugin'].startswith('Контур пешеходного перехода')]
     roads = [x for x in additional_data if x['plugin'].startswith('Контур дороги')]
-    traffic_lights_colors = [x for x in additional_data if x['plugin'] == 'Информация о цвете светофора']
+    traffic_lights_colors = [x for x in additional_data if x['plugin'].startswith('Информация о цвете светофора')]
 
     persons_coordinates = []
     pedestrian_crossings_coordinates = []

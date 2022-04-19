@@ -86,7 +86,15 @@ def delete_file_current(filename):
     file_group = dpg.get_item_children(f"file_{filename}", slot=1)[1]
     dpg.delete_item(dpg.get_item_children(file_group, slot=1)[2])
 
-def add_plugin_item(label, favorite=False, in_favorites_list=False):
+def set_time_to_show_tooltip(sender, app_data):
+    user_data = dpg.get_item_user_data(app_data)
+    user_data["hover_time"] += dpg.get_delta_time()
+    dpg.set_item_user_data(app_data, user_data)
+    if user_data["hover_time"] >= 1:
+        plugin_group = dpg.get_item_parent(app_data)
+        dpg.show_item(dpg.get_item_children(plugin_group, slot=1)[1])
+
+def add_plugin_item(label, info=None, favorite=False, in_favorites_list=False):
     parent = None
     tag = None
     if in_favorites_list:
@@ -96,7 +104,21 @@ def add_plugin_item(label, favorite=False, in_favorites_list=False):
         parent = "plugin_list_filter"
         tag = f"{label}_plugin"
     with dpg.group(horizontal=True, parent=parent, filter_key=label, tag=tag, show=not in_favorites_list or favorite):
-        dpg.add_button(label=label, width=-48, height=28, callback=lambda: pm.add_plugin(label))
+        button = dpg.add_button(label=label, width=-48, height=28, callback=lambda: pm.add_plugin(label), user_data={"hover_time": 0})
+        dpg.bind_item_handler_registry(button, "plugin_button_registry")
+        if not info is None:
+            with dpg.tooltip(dpg.last_item(), show=False):
+                dpg.add_spacer(height=2)
+                dpg.add_text(info["title"] + "   ", wrap=400, indent=10)
+                dpg.bind_item_font(dpg.last_item(), "tab_title")
+                dpg.add_spacer()
+                if not info.get("author") is None:
+                    dpg.add_text("Автор: " + info["author"] + "   ", wrap=400, indent=10)
+                if not info.get("version") is None:
+                    dpg.add_text("Версия: " + info["version"] + "   ", wrap=400, indent=10)
+                if not info.get("description") is None:
+                    dpg.add_text(info["description"] + "   ", wrap=400, indent=10)
+                dpg.add_spacer(height=2)
         if not favorite and not in_favorites_list:
             dpg.add_image_button("star_add", callback=lambda: add_to_favorites(label))
             dpg.bind_item_theme(dpg.last_item(), "favourite_add")
@@ -105,6 +127,7 @@ def add_plugin_item(label, favorite=False, in_favorites_list=False):
         if in_favorites_list:
             dpg.add_image_button("star_dismiss", callback=lambda: delete_from_favorites(label))
             dpg.bind_item_theme(dpg.last_item(), "favourite_dismiss")
+    dpg.bind_item_theme(tag, "popup_style")
 
 def add_to_favorites(label):
     if len(storage.favorite_plugins) == 5:

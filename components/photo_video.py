@@ -64,14 +64,20 @@ def process_image(data, single_image=True, index=None):
         parameters = storage.plugins_settings.get(plugin_title)
         if parameters['need_load']:
             dpg.hide_item("progress_bar")
+            dpg.hide_item("time_evaluation")
+            storage.set_value(keys.IS_DIVISIBLE, False)
+            storage.process_timer_to_zero()
             heavy = pm.load_heavy(plugin, parameters["settings"], single_image)
             storage.edit_need_load(plugin_title, heavy)
         else:
             heavy = parameters["payload"]
+
         dpg.show_item("progress_bar")
         dpg.hide_item("loading_indicator")
         dpg.show_item("state_of_loading")
         dpg.show_item("time_evaluation")
+        storage.set_value(keys.IS_DIVISIBLE, True)
+
         mode = "all"
         if not storage.all_frames:
             mode = "one"
@@ -144,6 +150,8 @@ def open_cv(object, activate=False):
             os.mkdir(temp_frames_folder)
         temp_folder_path = rf"{temp_frames_folder}/{temp_folder_name}"
         if not os.path.isdir(temp_folder_path):
+            storage.set_value(keys.IS_PROCESSING, True)
+            storage.set_value(keys.IS_DIVISIBLE, True)
             dpg.show_item("state_of_loading")
             dpg.hide_item("loading_indicator")
             dpg.show_item("progress_bar")
@@ -160,6 +168,7 @@ def open_cv(object, activate=False):
                 count_of_frames += 1
                 dpg.set_value("text_of_loading", f"Открытие видео")
                 dpg.set_value("progress_bar", count_of_frames / length_of_video)
+                storage.set_value(keys.PART_OF_PROCESS, count_of_frames / length_of_video)
             cap.release()
             if storage.program_settings["send_signal"]:
                 beepy.beep(sound='ready')
@@ -179,6 +188,7 @@ def open_cv(object, activate=False):
 
         dpg.hide_item("state_of_loading")
         dpg.hide_item("progress_bar")
+        storage.process_is_finished()
         dpg.show_item("video_player_window")
         dpg.show_item("close_and_delete_temp_files")
         dpg.enable_item("close_and_delete_temp_files")
@@ -285,6 +295,8 @@ def process_all_frames():
 
     dpg.show_item("state_of_loading")
     dpg.hide_item("loading_indicator")
+    storage.set_value(keys.IS_PROCESSING, True)
+    storage.set_value(keys.IS_DIVISIBLE, True)
     if len(storage.chain_of_plugins) == 1:
         dpg.set_value("text_of_loading", "Применение плагина к кадрам")
     if len(storage.chain_of_plugins) > 1:
@@ -299,8 +311,10 @@ def process_all_frames():
         cv2.imwrite(f"{temp_folder_processing_path}/{i}.jpg", data, (cv2.IMWRITE_JPEG_QUALITY, 
         storage.program_settings["quality_of_pictures"])) # запись в дополнительную папку
         dpg.set_value("progress_bar", i / storage.total_frames)
+        storage.set_value(keys.PART_OF_PROCESS, i / storage.total_frames)
 
     dpg.hide_item("state_of_loading")
+    storage.process_is_finished()
 
     dpg.delete_item("video_plots_group", children_only=True)
     dpg.configure_item("plots_combo", items=["(Нет)"])

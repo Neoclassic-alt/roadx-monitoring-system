@@ -57,6 +57,7 @@ with dpg.font_registry():
     utils.load_font(r"assets\fonts\OpenSans-Medium.ttf", 16, tag="node_items_font")
     utils.load_font(r"assets\fonts\OpenSans-Italic.ttf", 18, tag="mini_italic")
     utils.load_font(r"assets\fonts\OpenSans-MediumItalic.ttf", 16, tag="mini_node_italic")
+    utils.load_font(r"assets\fonts\OpenSans-SemiBold.ttf", 18, tag="tooltip_font")
 
 assets.get_assets()
 
@@ -96,10 +97,13 @@ with dpg.handler_registry(tag="plugin_node_editor_registry", show=False):
 with dpg.item_handler_registry(tag="resize_node_plugins_window_handler"):
     dpg.add_item_resize_handler(callback=inf.resize_node_plugins_window)
 
+with dpg.item_handler_registry(tag="plugin_button_registry"):
+    dpg.add_item_hover_handler(callback=cc.set_time_to_show_tooltip)
+
 #window_theme = themes.window_theme()
 themes.launch_themes()
 
-with dpg.window(label="Управление обработкой объектов", show=False, pos=(0, 40), tag="plugins_window", 
+with dpg.window(label="Редактор обработки", show=False, pos=(0, 40), tag="plugins_window", 
 width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plugin_node_editor_registry")):
     dpg.add_spacer(height=5)
     with dpg.group(horizontal=True, horizontal_spacing=0):
@@ -174,7 +178,8 @@ width=320, height=427, modal=True):
         dpg.add_text("В избранное можно добавлять не более 5 плагинов", indent=10, tag="no_more_5_plugins", 
         color=(249, 80, 80), show=False, wrap=290)
         for plugin_title in storage.plugins_titles:
-            cc.add_plugin_item(plugin_title, in_favorites_list=True)
+            plugin_info = storage.plugins[storage.plugins_titles_to_names[plugin_title]]["info"]
+            cc.add_plugin_item(plugin_title, plugin_info, in_favorites_list=True)
     dpg.add_spacer()
     dpg.add_color_button((228, 228, 228), indent=20, width=286, height=1, no_border=True, no_drag_drop=True)
     dpg.add_spacer(height=7)
@@ -193,7 +198,8 @@ width=320, height=427, modal=True):
         dpg.bind_item_theme("list_of_plugins", themes.plugin_window())
         with dpg.filter_set(tag="plugin_list_filter"):
             for plugin_title in storage.plugins_titles:
-                cc.add_plugin_item(plugin_title)
+                plugin_info = storage.plugins[storage.plugins_titles_to_names[plugin_title]]["info"]
+                cc.add_plugin_item(plugin_title, plugin_info)
     dpg.bind_item_theme("plugin_search_field", themes.search_field())
 
 dpg.bind_item_theme("add_plugins_window", "window_theme")
@@ -340,9 +346,9 @@ with dpg.window(tag="objects_window"):
 
         with dpg.child_window(label="Добавить файлы", tag="add_file_buttons", height=32, width=128):
             with dpg.group(horizontal=True, horizontal_spacing=0):
-                dpg.add_image_button("add_image")
+                dpg.add_image_button("add_image", callback=lambda: dpg.show_item("pc_file_dialog"))
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_folder")
+                dpg.add_image_button("add_folder", callback=lambda: dpg.show_item("pc_folder_dialog"))
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
                 dpg.add_image_button("add_from_internet_inactive", enabled=False)
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
@@ -473,11 +479,11 @@ no_resize=True, tag="file_menu_window", width=293, height=388):
         tag="connect_to_camera_menu_item", disabled=True, demo=True)
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
         cc.add_menu_item("Сохранить изображение / кадр",
-        tag="save_image_menu_item", disabled=True)
-        cc.add_menu_item("Сохранить все кадры", tag="save_all_frames_menu_item", disabled=True)
-        cc.add_menu_item("Сохранить видео", tag="save_video_menu_item", disabled=True)
+        tag="save_image_menu_item", disabled=True, width=293)
+        cc.add_menu_item("Сохранить все кадры", tag="save_all_frames_menu_item", disabled=True, width=293)
+        cc.add_menu_item("Сохранить видео", tag="save_video_menu_item", disabled=True, width=293)
         cc.add_menu_item("Сохранить все изображения", "file_menu",
-        tag="save_all_images_menu_item", disabled=True)
+        tag="save_all_images_menu_item", disabled=True, width=293)
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
         cc.add_menu_item("Закрыть", spacer_width=123, shortcut="Ctrl + C",
         tag="close_menu_item", disabled=True, width=300, callback=fo.close_object)
@@ -544,7 +550,7 @@ dpg.bind_item_theme("file_explorer_window", "window_theme")
 
 #! окно с информацией в результате обработки
 with dpg.window(label="Информация, полученная в результате обработки", show=False, pos=(100, 100), 
-no_resize=True, tag="information_window", width=897, height=413):
+no_resize=True, tag="information_window", width=897, height=423):
     with dpg.group(tag="information_tab_bar"):
         with dpg.tab_bar():
             with dpg.tab(label="Видео", indent=10, tag="information_video_tab"):
@@ -556,6 +562,7 @@ no_resize=True, tag="information_window", width=897, height=413):
                     dpg.add_text('В настоящее время здесь ничего нет', tag="no_plots_text")
                     dpg.bind_item_font("no_plots_text", "mini_italic")
                     dpg.add_group(horizontal=True, tag="video_plots_group")
+                    dpg.add_spacer()
                     with dpg.group(horizontal=True, tag="plot_combo_group", show=False):
                         with dpg.group():
                             dpg.add_spacer()
@@ -640,6 +647,7 @@ width=310, pos=(300, 200)):
     dpg.add_text("A — применить цепочку плагинов", bullet=True)
 
 dpg.add_window(label="График плагина", show=False, autosize=True, no_resize=True, tag="plugin_window")
+dpg.bind_item_theme("plugin_window", themes.window_rounding())
 
 dpg.bind_theme(themes.get_theme())
 dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
@@ -672,7 +680,8 @@ while dpg.is_dearpygui_running():
             #dpg.set_value("speed_frames_text", f"{fps} кадров/сек")
         # для соответствия воспроизведения частоты кадров видео и частоты обновления экрана
         time.sleep(max(0.0, 1/storage.frame_rate - dpg.get_delta_time()))
-    if not storage.current_object is None and storage.current_object["type"] == OBJECT_TYPES.video:
+    if not storage.current_object is None and storage.current_object["type"] == OBJECT_TYPES.video \
+        and not dpg.get_item_state("plugins_window")["visible"] and not storage.crosshair[0]:
         storage.add_to_video_timer(dpg.get_delta_time())
 
         if storage.video_timer < 2.5 and dpg.get_item_user_data("video_player_window")["opacity"] < 255:
@@ -689,9 +698,24 @@ while dpg.is_dearpygui_running():
 
         opacity = dpg.get_item_user_data("video_player_window")["opacity"]
         inf.apply_opacity_to_video_player(opacity)
-    #print(dpg.get_delta_time())
+
+    if dpg.get_item_state("plugins_window")["visible"] or storage.crosshair[0]:
+        dpg.hide_item("video_player_window")
+
     if storage.is_processing:
         storage.add_to_process_timer(dpg.get_delta_time())
+        minutes = storage.processed_time // 60
+        seconds = storage.processed_time % 60
+        dpg.set_value("time_from_begin", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
+        if storage.is_divisible and dpg.get_frame_count() % 30 == 0:
+            if storage.processed_time > 5 and storage.part_of_process > 0.01:
+                remaining_time = (1 / storage.part_of_process - 1) * storage.processed_time
+                minutes = remaining_time // 60
+                seconds = remaining_time % 60
+                dpg.set_value("possible_time_ending", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
+            else:
+                dpg.set_value("possible_time_ending", "Оценивается...")
+
 
     dpg.render_dearpygui_frame()
 

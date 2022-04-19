@@ -61,3 +61,5 @@ def get_assets():
         utils.add_static_texture(r"assets/new-icons/expand-to-full.png", "expand_to_full_white")
         utils.add_static_texture(r"assets/new-icons/selected.png", "selected")
         utils.add_static_texture(r"assets/new-icons/graph.png", "graph")
+        utils.add_static_texture(r"assets/new-icons/node-warning.png", "node_warning")
+        utils.add_static_texture(r"assets/new-icons/node-check.png", "node_check")
