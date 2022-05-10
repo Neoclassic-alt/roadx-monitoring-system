@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 
 class storage:
     plugins = None
@@ -35,6 +34,10 @@ class storage:
     total_frames = 0 # общее число кадров
     video_data = {} # информация на графике о ролике
     ### ДЛЯ ВИДЕО: КОНЕЦ ###
+
+    ### Активность камеры ###
+    caption = None # файл камеры OpenCV
+    is_camera_playing = False # включена ли камера
 
     process_times = [] # информация о времени обработки данных
     # формат: [(время обработки плагином 1, время обработки плагином 2, ...), (время обработки плагином 1, время обработки плагином 2, ...), ...]
@@ -118,6 +121,10 @@ class storage:
             storage.processed_time = value
         if key == keys.PART_OF_PROCESS:
             storage.part_of_process = value
+        if key == keys.IS_CAMERA_PLAYING:
+            storage.is_camera_playing = value
+        if key == keys.CAPTION:
+            storage.caption = value
 
     @write_action
     def add_plugin(key, need_load):
@@ -340,6 +347,8 @@ class keys:
     IS_DIVISIBLE = "is_divisible"
     PROCESSED_TIME = "processed_time"
     PART_OF_PROCESS = "part_of_process"
+    IS_CAMERA_PLAYING = "is_camera_playing"
+    CAPTION = "caption"
 
 class OBJECT_STATUSES:
     new = "new"

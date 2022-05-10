@@ -1,17 +1,11 @@
 import dearpygui.dearpygui as dpg
-import cv2
-from threading import Thread
 import components.photo_video as pv
 from components.storage import storage
 from components.storage import keys
 from components.storage import OBJECT_TYPES, FILE_FORMATS, OBJECT_STATUSES
 import components.custom_components as custom_components
+import components.interface_functions as inf
 import os
-from queue import Queue
-import time
-
-class AppInfo():
-    pass
 
 results = []
 
@@ -31,30 +25,38 @@ def open_objects(sender, app_data, user_data):
     if user_data == OBJECT_TYPES.url:
         urls = dpg.get_value('urls').split('\n')
         for url in urls:
+            short_url = value.rpartition("\\")[2]
             if url.rpartition('.')[-1] in FILE_FORMATS.images:
-                storage.append_object({'url': url, 'type': OBJECT_TYPES.url})
-            #if url.rpartition('.')[-1] in ("mp4", 'avi'):
-            #    opened_objects.append({'url': url, 'type': functions.OBJECT_TYPES.stream, 'plugin': plugin})
+                storage.append_object({'url': url, 'short_url': short_url, 'type': OBJECT_TYPES.url, "status": OBJECT_STATUSES.new})
+                custom_components.add_file_item(url, OBJECT_TYPES.url, short_url=short_url)
         dpg.hide_item("add_urls_window")
         dpg.set_value("urls", "")
-        dpg.set_value("apply_urls_plugin", "(Нет)")   
+
+    if user_data == OBJECT_TYPES.stream:
+        type_of_camera = dpg.get_value("type_of_camera")
+        if type_of_camera == "Веб-камера":
+            number_of_camera = dpg.get_value("camera_number")
+            storage.append_object({'url': int(number_of_camera), 'short_url': f"Камера {number_of_camera}", 
+            'type': OBJECT_TYPES.stream, "status": OBJECT_STATUSES.new})
+            custom_components.add_file_item(number_of_camera, OBJECT_TYPES.stream, short_url=f"Камера {number_of_camera}")
+        if type_of_camera == "IP-камера":
+            camera_url, camera_user, camera_password = dpg.get_values(["camera_url", "camera_user", "camera_password"])
+            if camera_user != "" and camera_password != "":
+                url = camera_url.replace("rtsp://", "")
+                url = f"rtsp://{camera_user}:{camera_password}@{url}"
+            else:
+                url = camera_url
+            storage.append_object({'url': url, 'short_url': f"Камера {camera_url}", 'type': OBJECT_TYPES.stream, 
+            "status": OBJECT_STATUSES.new})
+            custom_components.add_file_item(url, OBJECT_TYPES.stream, short_url=camera_url)
  
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
         custom_components.set_file_current(storage.opened_objects[0]["url"])
         pv.open_cv(storage.current_object, activate=True)
+        dpg.enable_item("change_after_connect_to_camera")
 
-    dpg.hide_item("hello_splash")
-    dpg.show_item("group_of_objects")
-    dpg.show_item("zoom")
-    dpg.enable_item("prev_file_button")
-    dpg.configure_item("prev_file_button", texture_tag="prev_file")
-    dpg.enable_item("more_files_button")
-    dpg.configure_item("more_files_button", texture_tag="more_files")
-    dpg.enable_item("next_file_button")
-    dpg.configure_item("next_file_button", texture_tag="next_file")
-    dpg.enable_item("close_files_button")
-    dpg.configure_item("close_files_button", texture_tag="close_image")
+    inf.show_tool_panel()
 
 # открыть папку с файлами
 def open_folder(sender, app_data):
@@ -72,18 +74,20 @@ def open_folder(sender, app_data):
     for file in files:
         if file.endswith(file_filter):
             if file.endswith(FILE_FORMATS.images):
-                type_of_file = OBJECT_TYPES.image
+                storage.append_object({"url": f"{current_path}\\{file}", "short_url": file, "type": 
+                OBJECT_TYPES.image, "status": OBJECT_STATUSES.new})
+                custom_components.add_file_item(f"{current_path}\\{file}", OBJECT_TYPES.image, short_url=file)
             if file.endswith(FILE_FORMATS.videos):
-                type_of_file = OBJECT_TYPES.video
-            storage.append_object({"url": f"{current_path}\\{file}", "type": type_of_file})
+                storage.append_object({"url": f"{current_path}\\{file}", "short_url": file, "type": 
+                OBJECT_TYPES.video, "status": OBJECT_STATUSES.new})
+                custom_components.add_file_item(f"{current_path}\\{file}", OBJECT_TYPES.video, short_url=file)
 
-    dpg.configure_item("combo_of_objects", items=tuple(map(lambda x: x['url'], storage.opened_objects)), 
-    default_value=storage.opened_objects[0]['url'])
-
-    dpg.show_item("group_of_objects")
     if storage.current_object is None:
         storage.set_value(keys.CURRENT_OBJECT, storage.opened_objects[0])
-        pv.open_cv(storage.current_object)
+        custom_components.set_file_current(storage.opened_objects[0]["url"])
+        pv.open_cv(storage.current_object, activate=True)
+
+    inf.show_tool_panel()
     
 # получить информацию по объекту из его url
 def object_info(url):
@@ -122,6 +126,7 @@ def close_object(url=None):
         dpg.delete_item(f"file_{search_url}_move_handler")
         dpg.delete_item(dpg.get_item_parent(f"file_{search_url}"))
         dpg.disable_item("begin_processing_button")
+        dpg.disable_item("change_after_connect_to_camera")
     
     if length > 1:
         index_of_elem = tuple(map(lambda x: x['url'], storage.opened_objects)) \
@@ -158,3 +163,4 @@ def close_all_objects():
     dpg.hide_item("video_player")
     dpg.show_item("hello_splash")
     dpg.disable_item("begin_processing_button")
+    dpg.disable_item("change_after_connect_to_camera")

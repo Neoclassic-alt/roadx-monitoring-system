@@ -46,7 +46,8 @@ class USBKey:
     # ограничить функции программы
     def limit(self):
         #dpg.disable_item("open_from_internet_button")
-        dpg.set_viewport_title("RoadX Monitoring System (DEMO)")
+        #dpg.set_viewport_title("RoadX Monitoring System (DEMO)")
+        dpg.set_viewport_title("RoadX Monitoring System")
         storage.set_value(keys.DEMO, True)
 
     # разблокировать программу

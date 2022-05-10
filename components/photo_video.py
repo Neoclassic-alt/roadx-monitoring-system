@@ -109,15 +109,16 @@ def open_cv(object, activate=False):
     data = None
     url = object["url"]
     object_type = object["type"]
-    dpg.hide_item("limit_1_minute")
+    #dpg.hide_item("limit_1_minute")
     storage.clear_additional_data()
     #storage.set_value(keys.PROCESSED, False)
+    storage.set_value(keys.IS_CAMERA_PLAYING, False)
     if object_type == OBJECT_TYPES.image:
         data = cv2.imread(url)
     if object_type == OBJECT_TYPES.url:
         data = get_image_from_url(url)
         if data is None:
-            print("Объект недоступен")
+            print("Объект недоступен") # TODO: поменять на другой текст ошибки
             return
     if object_type in (OBJECT_TYPES.image, OBJECT_TYPES.url):
         if len(storage.chain_of_plugins) > 0:
@@ -140,10 +141,10 @@ def open_cv(object, activate=False):
         cap = cv2.VideoCapture(url)
         length_of_video = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frame_rate = int(cap.get(cv2.CAP_PROP_FPS))
-        if (length_of_video / frame_rate) > 60 and storage.demo:
-            dpg.show_item("limit_1_minute")
-            dpg.hide_item("state_of_loading")
-            return
+        #if (length_of_video / frame_rate) > 60 and storage.demo:
+        #    dpg.show_item("limit_1_minute")
+        #    dpg.hide_item("state_of_loading")
+        #    return
         storage.set_value(keys.FRAME_RATE, frame_rate)
         temp_frames_folder = r"C:/ProgramData/cv_experiments/temp_frames"
         if not os.path.isdir(temp_frames_folder):
@@ -196,6 +197,12 @@ def open_cv(object, activate=False):
             cc.enable_menu_item("save_image_menu_item")
             cc.enable_menu_item("save_all_frames_menu_item")
             cc.enable_menu_item("save_video_menu_item")
+
+    if object_type == OBJECT_TYPES.stream:
+        cap = cv2.VideoCapture(url)
+        storage.set_value(keys.CAPTION, cap)
+        storage.set_value(keys.IS_CAMERA_PLAYING, True)
+
     dpg.show_item("main_image_child_window")
     if activate:
         cc.enable_menu_item("close_menu_item")
@@ -206,8 +213,9 @@ def open_cv(object, activate=False):
             dpg.enable_item("begin_processing_button")
     dpg.enable_item("expand_modes_button")
     dpg.hide_item("expand_tooltip")
-    inf.update_status_bar_info()
-    inf.update_viewport_title()
+    if object_type != OBJECT_TYPES.stream:
+        inf.update_status_bar_info()
+        inf.update_viewport_title()
     dpg.show_item("status_bar_info")
 
 # загрузить изображение с Интернета

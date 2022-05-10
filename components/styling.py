@@ -29,6 +29,7 @@ def get_theme():
         dpg.add_theme_color(dpg.mvThemeCol_ResizeGripActive, (64, 149, 227), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_DragDropTarget, (63, 12, 204), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Separator, (228, 228, 228), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_CheckMark, (64, 227, 149), category=dpg.mvThemeCat_Core)
         
         #dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 6, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 6, category=dpg.mvThemeCat_Core)
@@ -81,6 +82,12 @@ def get_theme():
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4, category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
+
+    with dpg.theme_component(dpg.mvCheckbox, parent=theme, enabled_state=False):
+        dpg.add_theme_color(dpg.mvThemeCol_CheckMark, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (246, 246, 246), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (246, 246, 246), category=dpg.mvThemeCat_Core)
 
     return theme
 
@@ -347,6 +354,10 @@ def window_theme():
         with dpg.theme_component(dpg.mvWindowAppItem):
             dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvThemeCol_Border, (165, 238, 203), category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
 
 def window_rounding():
     theme = dpg.add_theme()
@@ -447,7 +458,7 @@ def node_editor_style():
         dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected, (249, 80, 80), category=dpg.mvThemeCat_Nodes)
         dpg.add_theme_color(dpg.mvNodeCol_NodeOutline, (26, 114, 194, 0), category=dpg.mvThemeCat_Nodes)
         dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (42, 47, 65), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 10, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4, category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (194, 194, 194), category=dpg.mvThemeCat_Core)
@@ -545,6 +556,17 @@ def popup_style():
     with dpg.theme(tag="popup_style"):
         with dpg.theme_component(dpg.mvAll):
             dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (246, 246, 246), category=dpg.mvThemeCat_Core)
+
+def outline_button():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvButton, parent=theme, enabled_state=True):
+        dpg.add_theme_color(dpg.mvThemeCol_Border, (64, 149, 227), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvButton, parent=theme, enabled_state=False):
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
+    return theme
 
 ######
 

@@ -1,8 +1,6 @@
-from email.policy import default
 import dearpygui.dearpygui as dpg
-import json
 import components.utils as utils
-from components.storage import OBJECT_STATUSES, OBJECT_TYPES, PROCESS_MODES
+from components.storage import OBJECT_TYPES, PROCESS_MODES
 import components.key_module as key_module
 import components.plugin_manager as pm
 from components.storage import storage, keys
@@ -13,7 +11,6 @@ import components.interface_functions as inf
 import warnings
 import pyperclip as clipboard
 import time
-import webbrowser
 import components.custom_components as cc
 import components.assets as assets
 
@@ -252,10 +249,63 @@ width=261, height=285, no_title_bar=True, no_resize=True, no_move=True):
 
 dpg.bind_item_theme("modes_of_processing_window", themes.window_shadow())
 
-with dpg.window(label="Добавить URL", show=False, width=600, height=400, tag="add_urls_window"):
-    dpg.add_text("Добавьте URL (с новой строки):")
-    dpg.add_input_text(multiline=True, tag="urls")
-    dpg.add_button(label="Добавить URL", callback=fo.open_objects, user_data=OBJECT_TYPES.url)
+#! окно загрузки изображений из URL
+with dpg.window(label="Добавить URL", show=False, width=600, height=400, tag="add_urls_window", min_size=(350, 255)):
+    with dpg.group(indent=10):
+        dpg.add_spacer(height=5)
+        dpg.add_text("Добавьте URL (новый URL с новой строки):")
+        dpg.add_input_text(multiline=True, tag="urls", width=-10, height=-48)
+        dpg.add_spacer()
+        with dpg.group(horizontal=True):
+            dpg.add_child_window(width=-267)
+            dpg.add_button(label="Добавить файлы из интернета", callback=fo.open_objects, user_data=OBJECT_TYPES.url)
+            dpg.bind_item_theme(dpg.last_item(), themes.outline_button())
+
+dpg.bind_item_theme("add_urls_window", "window_theme")
+
+#! окно подключения к камере
+with dpg.window(label="Добавить камеру", show=False, width=600, height=204, tag="connect_to_camera_window", 
+min_size=(400, 204), max_size=(800, 204), user_data={"error": False}):
+    with dpg.group(indent=10):
+        dpg.add_spacer(height=5)
+        dpg.add_radio_button(["Веб-камера", "IP-камера"], horizontal=True, callback=inf.change_camera_fields, 
+        tag="type_of_camera", default_value="Веб-камера")
+        dpg.add_spacer(height=2)
+        with dpg.group(tag="web-camera_group", show=True):
+            with dpg.group(horizontal=True, horizontal_spacing=3):
+                dpg.add_text("Номер потока с нуля")
+                dpg.add_spacer(width=4)
+                dpg.add_input_int(tag="camera_number", width=-10, step=1, min_value=0)
+        with dpg.group(tag="IP-camera_group", show=False):
+            with dpg.group(horizontal=True, horizontal_spacing=3):
+                dpg.add_text("Адрес IP-камеры")
+                dpg.add_text("*", color=(249, 80, 80))
+                dpg.add_spacer(width=4)
+                dpg.add_input_text(tag="camera_url", width=-10, 
+                callback=lambda: dpg.configure_item("add_camera_button", enabled=dpg.get_value("camera_url") != ""))
+            with dpg.group():
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Пользователь", tag="camera_user")
+                    dpg.add_spacer(width=20)
+                    dpg.add_input_text(width=-10)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Пароль", tag="camera_password")
+                    dpg.add_spacer(width=68)
+                    dpg.add_input_text(width=-10, password=True)
+        dpg.add_spacer()
+        with dpg.group(tag="error_connect_to_camera", show=False, horizontal=True):
+            dpg.add_text("Ошибка при подключении к камере", color=(249, 80, 80))
+            dpg.add_image("help_img")
+        dpg.add_checkbox(label="Переключиться на добавленную камеру", default_value=True, 
+        tag="change_after_connect_to_camera", enabled=False)
+        dpg.add_spacer()
+        with dpg.group(horizontal=True):
+            dpg.add_child_window(width=-168) # 185
+            dpg.add_button(label="Добавить камеру", callback=fo.open_objects, user_data=OBJECT_TYPES.stream, 
+            tag="add_camera_button")
+            dpg.bind_item_theme("add_camera_button", themes.outline_button())
+
+dpg.bind_item_theme("connect_to_camera_window", "window_theme")
 
 #! диалоговое окно открытия файлов
 with dpg.file_dialog(label="Открыть объекты", callback=fo.open_objects, directory_selector=False,
@@ -307,6 +357,7 @@ with dpg.file_dialog(label="Открыть цепочку плагинов из 
 directory_selector=False, show=False, default_path="E:/opencv", file_count=1, width=800, height=600, tag="json_open_dialog"):
     dpg.add_file_extension(".json", color=(255, 150, 150, 255), custom_text="[Configuration]")
 
+#! главное окно
 with dpg.window(tag="objects_window"):
     dpg.bind_font(main_font)
     with dpg.group(horizontal=True, tag="main_menu", horizontal_spacing=0):
@@ -350,9 +401,9 @@ with dpg.window(tag="objects_window"):
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
                 dpg.add_image_button("add_folder", callback=lambda: dpg.show_item("pc_folder_dialog"))
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_from_internet_inactive", enabled=False)
+                dpg.add_image_button("add_from_internet", callback=lambda: inf.open_window_at_center("add_urls_window"))
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
-                dpg.add_image_button("add_video_inactive", enabled=False)
+                dpg.add_image_button("add_ip_camera", callback=lambda: inf.open_window_at_center("connect_to_camera_window"))
                 dpg.bind_item_theme(dpg.last_item(), themes.green_button_square_theme())
         dpg.bind_item_theme("add_file_buttons", themes.group_buttons_theme())
         dpg.add_spacer(width=10)
@@ -395,30 +446,23 @@ with dpg.window(tag="objects_window"):
         dpg.bind_item_theme("zoom", themes.group_buttons_theme())
 
     with dpg.group(show=False, tag="group_of_objects"):
-        dpg.add_text("В демо-версии можно загружать ролики не длиннее 1 минуты!", tag="limit_1_minute", color=(249, 80, 80), indent=20)
+        #dpg.add_text("В демо-версии можно загружать ролики не длиннее 1 минуты!", tag="limit_1_minute", color=(249, 80, 80), indent=20)
         with dpg.child_window(horizontal_scrollbar=True, tag="main_image_child_window", show=False):
             dpg.add_image("main_image", tag="main_image_desk")
         dpg.bind_item_theme("group_of_objects", themes.thin_scrollbar())
         dpg.bind_item_handler_registry("main_image_child_window", "image_handler_registry")
 
     with dpg.child_window(tag="hello_splash", height=-32):
-        dpg.add_spacer(height=160, tag="vertical_splash_spacer")
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=450, tag="splash_upper_text_spacer")
-            dpg.add_text("Приветствуем в программе RoadX!")
+        with dpg.group(indent=340, tag="indent_group"):
+            dpg.add_spacer(height=160, tag="vertical_splash_spacer")
+            dpg.add_text("Приветствуем в программе RoadX!", indent=110)
             dpg.bind_item_font(dpg.last_item(), "title")
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=550, tag="splash_img_spacer")
-            dpg.add_image("app_splash")
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=340, tag="splash_lower_text_spacer")
+            dpg.add_spacer(height=10)
+            dpg.add_image("app_splash", indent=210)
+            dpg.add_spacer(height=10)
             dpg.add_text("Для начала работы откройте объект (зелёные кнопки или меню \"Файл\")")
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=355, tag="splash_warning_text_spacer")
-            dpg.add_text("Для разблокировки всех возможностей активируйте полную версию", color=(249, 80, 80))
+            dpg.add_spacer(height=10)
+            dpg.add_text("Для разблокировки всех возможностей активируйте полную версию", color=(249, 80, 80), indent=15, show=False)
     dpg.bind_item_theme("hello_splash", themes.splash_window())
 
     ### Строка с информацией (или с загрузкой)
@@ -473,8 +517,8 @@ no_resize=True, tag="file_menu_window", width=293, height=388):
         width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
         cc.add_menu_item("Открыть папку", shortcut="Ctrl + F", spacer_width=75, 
         width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
-        cc.add_menu_item("Загрузить из интернета", width=300,
-        tag="download_from_internet_menu_item", disabled=True, demo=True)
+        cc.add_menu_item("Загрузить из интернета", width=300, callback=lambda: dpg.show_item("add_urls_window"),
+        tag="add_from_internet_menu_item", disabled=True, demo=True)
         cc.add_menu_item("Подключиться к IP-камере", width=300,
         tag="connect_to_camera_menu_item", disabled=True, demo=True)
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
@@ -519,7 +563,7 @@ no_move=True, tag="warning_of_delete_window", show=False):
             dpg.bind_item_theme("cancel_button", themes.cancel_button())
 dpg.bind_item_theme("warning_of_delete_window", themes.window_shadow())
 
-with dpg.window(label="Просмотр открытых файлов", width=440, height=420, pos=(200, 100), 
+with dpg.window(label="Менеджер файлов", width=440, height=420, pos=(200, 100), 
 tag="file_explorer_window", show=False, min_size=(288, 252), delay_search=True):
     dpg.add_spacer(height=7)
     with dpg.child_window(tag="search_field", width=-10, height=32, no_scrollbar=True, indent=10):
@@ -657,7 +701,7 @@ dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 #dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
-dpg.create_viewport(title='RoadX Watching System', width=1280, height=700, x_pos=350, y_pos=150)
+dpg.create_viewport(title='RoadX Watching System', width=1280, height=720, x_pos=350, y_pos=150)
 dpg.set_viewport_resize_callback(callback=inf.resize_viewport)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")
@@ -708,7 +752,7 @@ while dpg.is_dearpygui_running():
         seconds = storage.processed_time % 60
         dpg.set_value("time_from_begin", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
         if storage.is_divisible and dpg.get_frame_count() % 30 == 0:
-            if storage.processed_time > 5 and storage.part_of_process > 0.01:
+            if storage.processed_time > 6 and storage.part_of_process > 0.02:
                 remaining_time = (1 / storage.part_of_process - 1) * storage.processed_time
                 minutes = remaining_time // 60
                 seconds = remaining_time % 60
@@ -716,9 +760,16 @@ while dpg.is_dearpygui_running():
             else:
                 dpg.set_value("possible_time_ending", "Оценивается...")
 
+    if storage.is_camera_playing:
+        #! НЕ РАБОТАЕТ С ВИРТУАЛЬНЫМИ КАМЕРАМИ!
+        ret, frame = storage.caption.read()
+        print(frame.shape)
+        pv.change_texture(frame)
+        print(dpg.get_delta_time())
+    elif not storage.caption is None:
+        storage.caption.release()
+        storage.set_value(keys.CAPTION, None)
 
     dpg.render_dearpygui_frame()
 
 dpg.destroy_context()
-
-usbkey.write_in_journal(key_module.records.program_has_closed)

@@ -31,14 +31,18 @@ def save_program_settings():
     else:
         dpg.show_item("apply_chain_of_plugins_button")
 
-def manage_all_headers(signal):
-    items = dpg.get_item_children("additional_text_group")[1]
-    if signal == "roll up":
-        for item in items:
-            dpg.configure_item(item, default_open=False)
-    if signal == "expand":
-        for item in items:
-            dpg.configure_item(item, default_open=True)
+def show_tool_panel():
+    dpg.hide_item("hello_splash")
+    dpg.show_item("group_of_objects")
+    dpg.show_item("zoom")
+    dpg.enable_item("prev_file_button")
+    dpg.configure_item("prev_file_button", texture_tag="prev_file")
+    dpg.enable_item("more_files_button")
+    dpg.configure_item("more_files_button", texture_tag="more_files")
+    dpg.enable_item("next_file_button")
+    dpg.configure_item("next_file_button", texture_tag="next_file")
+    dpg.enable_item("close_files_button")
+    dpg.configure_item("close_files_button", texture_tag="close_image")
 
 def create_plots():
     for plugin_title, video_data in storage.video_data.items():
@@ -241,6 +245,12 @@ def open_plugins_window():
     dpg.configure_item("expand_window", pos=(dpg.get_viewport_client_width() - 70, dpg.get_viewport_client_height() - 70))
     dpg.hide_item("video_player_window")
 
+def open_window_at_center(tag, parent_tag="objects_window"):
+    dpg.show_item(tag)
+    pos = [(dpg.get_item_width(parent_tag) - dpg.get_item_width(tag)) / 2, 
+    (dpg.get_item_height(parent_tag) - dpg.get_item_height(tag)) / 2]
+    dpg.set_item_pos(tag, pos)
+
 def open_add_plugin_window():
     dpg.show_item("add_plugins_window")
     pos = [(dpg.get_item_width("plugins_window") - dpg.get_item_width("add_plugins_window")) / 2, 
@@ -263,7 +273,7 @@ def update_viewport_title():
         demo = " (DEMO)"
     if not storage.current_object is None:
         filename = f": {storage.current_object['url']}"
-    dpg.set_viewport_title("RoadX Monitoring System" + demo + filename)
+    dpg.set_viewport_title("RoadX Monitoring System" + filename)
 
 def update_status_bar_info():
     current_file = storage.current_object["url"]
@@ -279,17 +289,22 @@ def update_status_bar_info():
     dpg.set_value("status_bar_info", f"Разрешение: {width}×{height}, размер: {file_size}")
 
 def resize_viewport():
-    dpg.configure_item("main_image_child_window", height=dpg.get_viewport_client_height() - 80, width=dpg.get_viewport_client_width())
+    client_height = dpg.get_viewport_client_height()
+    client_width = dpg.get_viewport_client_width()
+    dpg.configure_item("main_image_child_window", height=client_height - 80, width=client_width)
     minus_width = 0
     minus_height = 0
-    if dpg.get_item_height("main_image_desk") > dpg.get_viewport_client_height():
+    if dpg.get_item_height("main_image_desk") > client_height:
         minus_width = 16
-    if dpg.get_item_width("main_image_desk") > dpg.get_viewport_client_width():
+    if dpg.get_item_width("main_image_desk") > client_width:
         minus_height = 16
-    dpg.set_item_pos("video_player_window", (0, dpg.get_viewport_client_height() - 134 - minus_height))
-    dpg.set_item_width("video_player_window", dpg.get_viewport_client_width() - minus_width)
-    dpg.set_item_width("player_pan", dpg.get_viewport_client_width() - 188 - minus_width)
-    dpg.set_item_indent("player_buttons", (dpg.get_viewport_client_width() / 2 - minus_width) - 108)
+    dpg.set_item_pos("video_player_window", (0, client_height - 134 - minus_height))
+    dpg.set_item_width("video_player_window", client_width - minus_width)
+    dpg.set_item_width("player_pan", client_width - 188 - minus_width)
+    dpg.set_item_indent("player_buttons", (client_width / 2 - minus_width) - 108)
+
+    dpg.set_item_indent("indent_group", (client_width - 540) / 2)
+    dpg.set_item_height("vertical_splash_spacer", (client_height - 300) / 2)
 
 def open_file_explorer():
     dpg.show_item("file_explorer_window") 
@@ -329,3 +344,23 @@ def open_information_window():
     dpg.show_item("information_window")
     dpg.hide_item("red_point_image")
     dpg.set_item_width("information_button", 116)
+
+def change_camera_fields(sender, app_data, user_data):
+    errored = dpg.get_item_user_data("connect_to_camera_window")["error"]
+    if app_data == "Веб-камера":
+        dpg.show_item("web-camera_group")
+        dpg.hide_item("IP-camera_group")
+        if not errored:
+            dpg.configure_item("connect_to_camera_window", height=204, min_size=(400, 204), max_size=(1000, 204))
+        else:
+            dpg.configure_item("connect_to_camera_window", height=240, min_size=(400, 240), max_size=(1000, 240))
+        dpg.enable_item("add_camera_button")
+    if app_data == "IP-камера":
+        dpg.show_item("IP-camera_group")
+        dpg.hide_item("web-camera_group")
+        if not errored:
+            dpg.configure_item("connect_to_camera_window", height=275, min_size=(400, 275), max_size=(1000, 275))
+        else:
+            dpg.configure_item("connect_to_camera_window", height=311, min_size=(400, 311), max_size=(1000, 311))
+        if len(dpg.get_value("camera_url")) == 0:
+            dpg.disable_item("add_camera_button")

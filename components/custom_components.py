@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 import components.interface_functions as inf
 import components.styling as themes
-from components.storage import OBJECT_STATUSES, storage, keys
+from components.storage import OBJECT_TYPES, OBJECT_STATUSES, storage, keys
 import components.file_operations as fo
 import components.plugin_manager as pm
 
@@ -62,6 +62,8 @@ extra_directory=False):
         with dpg.child_window(width=-52, height=height, tag=f"file_{filename}"):
             dpg.add_spacer(height=1)
             with dpg.group(horizontal=True):
+                if type_ == OBJECT_TYPES.stream:
+                    type_ = "camera"
                 if status == OBJECT_STATUSES.new:
                     dpg.add_image(type_)
                 else:
