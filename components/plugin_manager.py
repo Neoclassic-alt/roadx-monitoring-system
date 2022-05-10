@@ -11,10 +11,11 @@ import components.styling as themes
 import components.custom_components as cc
 
 def load_plugins():
-    all_folders = os.listdir('.\plugins')
+    PATH_TO_PLUGINS = "plugin_system/plugins"
+    all_folders = os.listdir('.\plugin_system\plugins')
     plugins = {}
     for f8ile in all_folders:
-        module_files = os.listdir(f'plugins/{f8ile}')
+        module_files = os.listdir(f'{PATH_TO_PLUGINS}/{f8ile}')
         is_plugin = True
         try:
             if not ('info.json' in module_files) or not f'main.py' in module_files:
@@ -24,12 +25,12 @@ def load_plugins():
             is_plugin = False
         if is_plugin:
             plugins[f8ile] = {'info': '', 'interface': '', 'payload': None, 'transform': '', 'group': None}
-            with open(f"plugins/{f8ile}/info.json", "r", encoding='utf-8') as json_file:
+            with open(f"{PATH_TO_PLUGINS}/{f8ile}/info.json", "r", encoding='utf-8') as json_file:
                 plugins[f8ile]['info'] = json.load(json_file)
             # импорт плагина
-            module = importlib.import_module(f'plugins.{f8ile}.main')
-            if os.path.isfile(f"plugins/{f8ile}/interface.json"):
-                with open(f"plugins/{f8ile}/interface.json", "r", encoding='utf-8') as interface_file:
+            module = importlib.import_module(f'plugin_system.plugins.{f8ile}.main')
+            if os.path.isfile(f"{PATH_TO_PLUGINS}/{f8ile}/interface.json"):
+                with open(f"{PATH_TO_PLUGINS}/{f8ile}/interface.json", "r", encoding='utf-8') as interface_file:
                     plugins[f8ile]['interface'] = json.load(interface_file)
             else:
                 plugins[f8ile]['interface'] = None
