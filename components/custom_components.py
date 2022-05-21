@@ -219,10 +219,16 @@ def add_plugin_settings(interface, name, title):
             # задание двух слайдеров от x до y
             # TODO: переделать для назначения сразу в настройки
             def set_settings_to_point(sender, app_data, user_data):
-                current_node = dpg.get_item_parent(dpg.get_item_parent(sender))
+                current_node = dpg.get_item_parent(dpg.get_item_parent(dpg.get_item_parent(sender)))
                 current_plugin_label = dpg.get_item_label(current_node)
-                storage.set_plugin_settings(f"{current_plugin_label}##{current_node}", user_data[1], 
-                app_data, var=user_data[0])
+                current_plugin = f"{current_plugin_label}##{current_node}"
+                current_plugin_settings = storage.plugins_settings[current_plugin]["settings"]
+                if user_data[0] == 'x':
+                    storage.set_plugin_settings(f"{current_plugin_label}##{current_node}", user_data[1], 
+                    [app_data, current_plugin_settings[user_data[1]][1]])
+                if user_data[0] == 'y':
+                    storage.set_plugin_settings(f"{current_plugin_label}##{current_node}", user_data[1], 
+                    [current_plugin_settings[user_data[1]][0], app_data])
             settings = {"x_min": 0, "x_max": 640, "y_min": 0, "y_max": 480}
             if not field.get("settings") is None:
                 settings["x_min"] = field["settings"].get("x_min") or 0

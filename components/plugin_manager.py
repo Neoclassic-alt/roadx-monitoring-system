@@ -173,8 +173,10 @@ def add_plugin(label):
             with dpg.group(horizontal=True) as id_group:
                 dpg.add_text(f"ID: {plugin_id}")
                 dpg.bind_item_font(dpg.last_item(), "node_items_font")
-                warning_image = dpg.add_image("node_warning", show=False)
-                dpg.add_tooltip(warning_image)
+                duplicate_button = dpg.add_image_button("duplicate")
+                dpg.bind_item_theme(duplicate_button, "duplicate_button")
+                dpg.add_image("node_warning", show=False)
+                dpg.add_tooltip(dpg.last_item())
                 dpg.bind_item_font(id_group, "tooltip_font")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static) as plugin_settings:
             if not interface is None:
@@ -183,7 +185,7 @@ def add_plugin(label):
                 dpg.add_text("Нет настроек")
                 dpg.bind_item_font(dpg.last_item(), "mini_node_italic")
         dpg.add_button(label="Скрыть", user_data={"closed": False, "plugin_settings_id": plugin_settings}, 
-            callback=toggle_node_settings, parent=id_group, before=warning_image, show=not interface is None)
+            callback=toggle_node_settings, parent=id_group, before=duplicate_button, show=not interface is None)
         dpg.bind_item_font(dpg.last_item(), "node_items_font")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Input):
             dpg.add_text("Ввод")
@@ -414,31 +416,31 @@ def show_previous():
         node_attribute = dpg.get_item_children(node_id, slot=1)[0]
         node_group = dpg.get_item_children(node_attribute, slot=1)[0]
         node_items = dpg.get_item_children(node_group, slot=1)
-        dpg.delete_item(node_items[3], children_only=True)
+        dpg.delete_item(node_items[4], children_only=True)
 
         dpg.show_item(node_items[2])
-        dpg.add_spacer(parent=node_items[3])
+        dpg.add_spacer(parent=node_items[4])
         if results.count(True) == len(results):
-            dpg.configure_item(node_items[2], texture_tag="node_check")
-            dpg.add_text("Все предыдущие плагины на месте", parent=node_items[3], indent=5)
+            dpg.configure_item(node_items[3], texture_tag="node_check")
+            dpg.add_text("Все предыдущие плагины на месте", parent=node_items[4], indent=5)
         else:
-            dpg.configure_item(node_items[2], texture_tag="node_warning")
-            dpg.add_text("Не хватает предыдущих плагинов: ", parent=node_items[3], indent=5)
+            dpg.configure_item(node_items[3], texture_tag="node_warning")
+            dpg.add_text("Не хватает предыдущих плагинов: ", parent=node_items[4], indent=5)
 
         exist_flag = False # хоть один предыдущий плагин присутствует
 
         for i, result in enumerate(results):
             if not result:
                 dpg.add_text(previous_titles[plugin_title][i] + "  ", bullet=True, color=(250, 137, 137), 
-                parent=node_items[3], indent=5)
+                parent=node_items[4], indent=5)
             else:
                 exist_flag = True
         
         if exist_flag:
-            dpg.add_spacer(parent=node_items[3])
-            dpg.add_text("Имеющиеся плагины: ", parent=node_items[3], indent=5)
+            dpg.add_spacer(parent=node_items[4])
+            dpg.add_text("Имеющиеся плагины: ", parent=node_items[4], indent=5)
             for i, result in enumerate(results):
                 if result:
-                    dpg.add_text(previous_titles[plugin_title][i] + "  ", bullet=True, parent=node_items[3], indent=5)
+                    dpg.add_text(previous_titles[plugin_title][i] + "  ", bullet=True, parent=node_items[4], indent=5)
 
-        dpg.add_spacer(parent=node_items[3])
+        dpg.add_spacer(parent=node_items[4])

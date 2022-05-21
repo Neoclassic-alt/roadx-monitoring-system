@@ -470,6 +470,7 @@ def node_editor_style():
         dpg.add_theme_color(dpg.mvThemeCol_Button, (158, 158, 158), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (194, 194, 194), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (194, 194, 194), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_CheckMark, (64, 149, 227), category=dpg.mvThemeCat_Core)
     with dpg.theme_component(dpg.mvInputFloat, parent=theme):
         dpg.add_theme_color(dpg.mvThemeCol_Text, (51, 51, 51), category=dpg.mvThemeCat_Core)
     with dpg.theme_component(dpg.mvInputInt, parent=theme):
@@ -568,7 +569,14 @@ def outline_button():
         dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255), category=dpg.mvThemeCat_Core)
     return theme
 
-######
+def duplicate_button():
+    with dpg.theme(tag="duplicate_button"):
+        with dpg.theme_component(dpg.mvImageButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (157, 197, 73), category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 2, category=dpg.mvThemeCat_Core)
+
+########################
 
 def launch_themes():
     get_crosshair_button_theme()
@@ -585,3 +593,4 @@ def launch_themes():
     hover_button_theme()
     active_button_theme()
     popup_style()
+    duplicate_button()

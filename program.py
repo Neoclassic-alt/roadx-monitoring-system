@@ -106,13 +106,10 @@ width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plug
     with dpg.group(horizontal=True, horizontal_spacing=0):
         dpg.add_spacer(width=10)
         dpg.add_button(label="Добавить плагин", callback=inf.open_add_plugin_window)
-        dpg.add_button(label="Пресеты")
-        dpg.add_spacer(width=10)
-        dpg.add_image("vertical_separator")
-        dpg.add_spacer(width=10)
-        dpg.add_button(label="Очистить", enabled=False, tag="open_warning_clear_desk_button", 
+        dpg.add_button(label="Просмотреть пресеты")
+        dpg.add_button(label="Очистить редактор", enabled=False, tag="open_warning_clear_desk_button", 
         callback=inf.open_warning_clear_desk)
-        dpg.add_button(label="Удалить", enabled=False, tag="delete_nodes_button", 
+        dpg.add_button(label="Удалить данные", enabled=False, tag="delete_nodes_button", 
         callback=pm.delete_nodes_and_links)
         dpg.add_child_window(height=32, width=-199)
         with dpg.child_window(tag="apply_plugin_button", height=32, width=184):
@@ -178,7 +175,9 @@ width=320, height=427, modal=True):
     with dpg.group(horizontal=True):
         with dpg.child_window(tag="plugin_search_field", width=-46, height=32, no_scrollbar=True, indent=20):
             with dpg.group(horizontal=True):
-                dpg.add_image("search_icon", indent=2)
+                with dpg.group():
+                    dpg.add_spacer()
+                    dpg.add_image("search_icon", indent=10)
                 dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1, 
                 callback=lambda s, d: dpg.set_value("plugin_list_filter", d))
         with dpg.group():
@@ -512,10 +511,10 @@ no_resize=True, tag="file_menu_window", width=293, height=388):
         width=300, tag="open_file_menu_item", callback=lambda: dpg.show_item("pc_file_dialog"))
         cc.add_menu_item("Открыть папку", shortcut="Ctrl + F", spacer_width=75, 
         width=300, tag="open_folder_menu_item", callback=lambda: dpg.show_item("pc_folder_dialog"))
-        cc.add_menu_item("Загрузить из интернета", width=300, callback=lambda: dpg.show_item("add_urls_window"),
-        tag="add_from_internet_menu_item", disabled=True, demo=True)
-        cc.add_menu_item("Подключиться к IP-камере", width=300,
-        tag="connect_to_camera_menu_item", disabled=True, demo=True)
+        cc.add_menu_item("Загрузить из интернета", width=300, callback=lambda: inf.open_window_at_center("add_urls_window"),
+        tag="add_from_internet_menu_item")
+        cc.add_menu_item("Подключиться к IP-камере", width=300, tag="connect_to_camera_menu_item", 
+        callback=lambda: inf.open_window_at_center("connect_to_camera_window"))
         dpg.add_color_button((228, 228, 228), indent=20, width=253, height=1, no_border=True, no_drag_drop=True)
         cc.add_menu_item("Сохранить изображение / кадр",
         tag="save_image_menu_item", disabled=True, width=293)
@@ -563,7 +562,9 @@ tag="file_explorer_window", show=False, min_size=(288, 252), delay_search=True):
     dpg.add_spacer(height=7)
     with dpg.child_window(tag="search_field", width=-10, height=32, no_scrollbar=True, indent=10):
         with dpg.group(horizontal=True):
-            dpg.add_image("search_icon", indent=2)
+            with dpg.group():
+                dpg.add_spacer()
+                dpg.add_image("search_icon", indent=10)
             dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1,
             callback=lambda s, d: dpg.set_value("file_filter_container", d), tag="search_field_input")
     dpg.bind_item_theme("search_field", themes.search_field())
@@ -696,7 +697,7 @@ dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 #dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
-dpg.create_viewport(title='RoadX Watching System', width=1280, height=720, x_pos=350, y_pos=150)
+dpg.create_viewport(title='RoadX Watching System', width=1000, height=600, x_pos=350, y_pos=150)
 dpg.set_viewport_resize_callback(callback=inf.resize_viewport)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")

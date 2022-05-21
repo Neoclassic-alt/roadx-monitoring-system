@@ -63,3 +63,4 @@ def get_assets():
         utils.add_static_texture(r"assets/icons/graph.png", "graph")
         utils.add_static_texture(r"assets/icons/node-warning.png", "node_warning")
         utils.add_static_texture(r"assets/icons/node-check.png", "node_check")
+        utils.add_static_texture(r"assets/icons/duplicate-icon.png", "duplicate")
