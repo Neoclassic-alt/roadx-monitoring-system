@@ -16,6 +16,7 @@ import components.assets as assets
 
 # загрузка модулей
 storage.set_value(keys.PLUGINS, pm.load_plugins())
+pm.load_presets()
 
 # связываем заголовок плагина с его именем для нужд интерфейса
 pm.set_titles_to_names()
@@ -105,11 +106,11 @@ width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plug
     dpg.add_spacer(height=5)
     with dpg.group(horizontal=True, horizontal_spacing=0):
         dpg.add_spacer(width=10)
-        dpg.add_button(label="Добавить плагин", callback=inf.open_add_plugin_window)
-        dpg.add_button(label="Просмотреть пресеты")
+        dpg.add_button(label="Добавить плагин", callback=lambda: inf.open_window_at_center("add_plugins_window"))
+        dpg.add_button(label="Просмотреть пресеты", callback=lambda: inf.open_window_at_center("add_presets_window"))
         dpg.add_button(label="Очистить редактор", enabled=False, tag="open_warning_clear_desk_button", 
         callback=inf.open_warning_clear_desk)
-        dpg.add_button(label="Удалить данные", enabled=False, tag="delete_nodes_button", 
+        dpg.add_button(label="Удалить", enabled=False, tag="delete_nodes_button", 
         callback=pm.delete_nodes_and_links)
         dpg.add_child_window(height=32, width=-199)
         with dpg.child_window(tag="apply_plugin_button", height=32, width=184):
@@ -125,17 +126,10 @@ width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plug
                         dpg.add_spacer(width=10)
                     dpg.add_spacer(height=7)
         dpg.bind_item_theme("apply_plugin_button", themes.apply_plugins_button())
-    #with dpg.group(horizontal=True, pos=(0, 30)):
-    #    dpg.add_text("Плагин", indent=85)
-    #    dpg.bind_item_font(dpg.last_item(), "micro_font")
-    #    dpg.add_text("Файл", indent=320)
-    #    dpg.bind_item_font(dpg.last_item(), "micro_font")
-    #    dpg.add_text("Узлы и соединения", indent=482)
-    #    dpg.bind_item_font(dpg.last_item(), "micro_font")
     dpg.add_spacer()
     with dpg.child_window(tag="plugin_node_editor_window", horizontal_scrollbar=True, height=-4):
         dpg.bind_item_font("plugin_node_editor_window", "node_items_font")
-        with dpg.node_editor(tag="plugin_node_editor", width=2000, height=1000, 
+        with dpg.node_editor(tag="plugin_node_editor", width=4000, height=2000, 
         callback=pm.link_nodes, delink_callback=pm.delink_node):
             with dpg.node(label="Изображение", pos=(50, 400), tag="node_input_image"):
                 with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Output):
@@ -153,7 +147,9 @@ width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plug
 dpg.bind_item_theme("plugins_window", "window_theme")
 dpg.bind_item_handler_registry("plugins_window", "resize_node_plugins_window_handler")
 
-# Окно добавления плагина
+print(storage.initial_nodes_id)
+
+#! Окно добавления плагинов
 with dpg.window(label="Добавить плагин", show=False, pos=(300, 100), tag="add_plugins_window", 
 width=320, height=427, modal=True):
     dpg.add_spacer(height=3)
@@ -195,6 +191,39 @@ width=320, height=427, modal=True):
 
 dpg.bind_item_theme("add_plugins_window", "window_theme")
 
+#! Окно добавления пресета
+with dpg.window(label="Установить пресет", show=False, pos=(300, 100), tag="add_presets_window", 
+width=320, height=427, modal=True, no_resize=True):
+    dpg.add_spacer(height=10)
+    with dpg.group(horizontal=True):
+        with dpg.child_window(tag="presets_search_field", width=-46, height=32, no_scrollbar=True, indent=20):
+            with dpg.group(horizontal=True):
+                with dpg.group():
+                    dpg.add_spacer()
+                    dpg.add_image("search_icon", indent=10)
+                dpg.add_input_text(hint="Искать", height=20, pos=(44, 6), width=-1, 
+                callback=lambda s, d: dpg.set_value("presets_list_filter", d))
+        with dpg.group():
+            dpg.add_spacer()
+            dpg.add_image("help_img")
+    dpg.add_spacer(height=3)
+    with dpg.child_window(tag="list_of_presets", indent=10, width=0, height=-66):
+        dpg.bind_item_font("list_of_presets", "mini_font")
+        dpg.bind_item_theme("list_of_presets", themes.plugin_window())
+        with dpg.filter_set(tag="presets_list_filter"):
+            for preset in storage.presets:
+                cc.add_preset_item(preset)
+    with dpg.group(tag="preset_warning", show=False):
+        with dpg.group(horizontal=True, indent=18):
+            with dpg.group():
+                dpg.add_spacer(height=4)
+                dpg.add_image("node_warning")
+            dpg.add_text("При установке пресета все ранее", indent=26, color=(249, 80, 80))
+        dpg.add_text("установленные плагины удаляются", indent=20, color=(249, 80, 80), pos=(0, 389))
+    dpg.bind_item_theme("presets_search_field", themes.search_field())
+
+dpg.bind_item_theme("add_presets_window", "window_theme")
+
 with dpg.window(label="Предупреждение", show=False, pos=(0, 0), tag="warning_clear_desk", 
 width=342, height=142, no_title_bar=True, no_resize=True, no_move=True, modal=True):
     dpg.add_spacer(height=3)
@@ -215,17 +244,12 @@ with dpg.window(label="Режимы обработки", show=False, tag="modes_
 width=261, height=285, no_title_bar=True, no_resize=True, no_move=True):
     with dpg.child_window(width=259, height=283, tag="modes_of_processing"):
         dpg.add_spacer(height=5)
-        #dpg.add_text("КАДРЫ", indent=105)
-        #dpg.bind_item_font(dpg.last_item(), "micro_font")
-        #dpg.add_spacer(height=3)
         cc.plugin_node_menu_item("Только текущий кадр", selected=True, tag="one_frame", 
         all_frames=False, group="frames")
         cc.plugin_node_menu_item("Все кадры", tag="all_frames", all_frames=True, group="frames")
         dpg.add_spacer(height=3)
         dpg.add_color_button((228, 228, 228), indent=10, width=241, height=1, no_border=True, no_drag_drop=True)
         dpg.add_spacer(height=3)
-        #dpg.add_text("ФАЙЛЫ", indent=105)
-        #dpg.bind_item_font(dpg.last_item(), "micro_font")
         cc.plugin_node_menu_item("Только текущий файл", selected=True, tag="one_file_mode", 
         mode=PROCESS_MODES.one, group="modes")
         cc.plugin_node_menu_item("Все файлы", tag="all_files_mode", mode=PROCESS_MODES.all_files, group="modes")
@@ -235,11 +259,6 @@ width=261, height=285, no_title_bar=True, no_resize=True, no_move=True):
         cc.plugin_node_menu_item("Ранее обработанные файлы", tag="earlier_mode", mode=PROCESS_MODES.earlier, 
         group="modes", disabled=True)
         dpg.add_spacer(height=3)
-        #dpg.add_spacer(height=3)
-        #with dpg.group(horizontal=True, indent=10):
-        #    dpg.add_checkbox(default_value=True)
-        #    dpg.add_text("Не обрабатывать файлы со статусом \"Актуальный\"", wrap=200)
-        #    dpg.bind_item_font(dpg.last_item(), "mini_font")
 
 dpg.bind_item_theme("modes_of_processing_window", themes.window_shadow())
 
@@ -345,11 +364,6 @@ show=False, tag="save_files_dialog", width=800, height=600):
 with dpg.file_dialog(label="Открыть объекты", callback=pm.file_set_path, directory_selector=False, show=False, 
 tag="pc_file_plugin_dialog", default_path="D:", file_count=1, width=800, height=600):
     dpg.add_file_extension(".*")
-
-#! диалоговое окно открытия JSON-файлов
-with dpg.file_dialog(label="Открыть цепочку плагинов из файла", callback=pm.open_chain_from_file, 
-directory_selector=False, show=False, default_path="E:/opencv", file_count=1, width=800, height=600, tag="json_open_dialog"):
-    dpg.add_file_extension(".json", color=(255, 150, 150, 255), custom_text="[Configuration]")
 
 #! главное окно
 with dpg.window(tag="objects_window"):

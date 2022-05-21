@@ -251,11 +251,11 @@ def open_window_at_center(tag, parent_tag="objects_window"):
     (dpg.get_item_height(parent_tag) - dpg.get_item_height(tag)) / 2]
     dpg.set_item_pos(tag, pos)
 
-def open_add_plugin_window():
-    dpg.show_item("add_plugins_window")
-    pos = [(dpg.get_item_width("plugins_window") - dpg.get_item_width("add_plugins_window")) / 2, 
-    (dpg.get_item_height("plugins_window") - dpg.get_item_height("add_plugins_window")) / 2]
-    dpg.set_item_pos("add_plugins_window", pos)
+#def open_add_plugin_window():
+#    dpg.show_item("add_plugins_window")
+#    pos = [(dpg.get_item_width("plugins_window") - dpg.get_item_width("add_plugins_window")) / 2, 
+#    (dpg.get_item_height("plugins_window") - dpg.get_item_height("add_plugins_window")) / 2]
+#    dpg.set_item_pos("add_plugins_window", pos)
 
 def open_warning_clear_desk():
     dpg.show_item("warning_clear_desk")

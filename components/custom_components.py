@@ -131,12 +131,28 @@ def add_plugin_item(label, info=None, favorite=False, in_favorites_list=False):
             dpg.bind_item_theme(dpg.last_item(), "favourite_dismiss")
     dpg.bind_item_theme(tag, "popup_style")
 
+def add_preset_item(preset):
+    with dpg.group(horizontal=True, parent="presets_list_filter", filter_key=preset["name"], tag=f"popup_{preset['name']}"):
+        button = dpg.add_button(label=preset["name"], width=-10, height=28, 
+        callback=lambda: pm.add_preset(preset["name"]), user_data={"hover_time": 0})
+        if not preset.get("description") is None:
+            dpg.bind_item_handler_registry(button, "plugin_button_registry")
+            with dpg.tooltip(dpg.last_item(), show=False):
+                with dpg.group(horizontal=True):
+                    with dpg.group():
+                        dpg.add_spacer(height=2)
+                        dpg.add_text(preset["description"], wrap=400, indent=10)
+                        dpg.add_spacer(height=2)
+                    dpg.add_spacer()
+                    
+    dpg.bind_item_theme(f"popup_{preset['name']}", "popup_style")
+
 def add_to_favorites(label):
     if len(storage.favorite_plugins) == 5:
         dpg.show_item("no_more_5_plugins")
         return
     dpg.show_item(f"{label}_plugin_in_favorites")
-    dpg.configure_item(dpg.get_item_children(f"{label}_plugin", slot=1)[1], texture_tag="star", enabled=False)
+    dpg.configure_item(dpg.get_item_children(f"{label}_plugin", slot=1)[2], texture_tag="star", enabled=False)
     storage.add_plugin_to_favorites(label)
     dpg.hide_item("no_plugins_in_favorites")
     if len(storage.favorite_plugins) > 1:
@@ -155,7 +171,7 @@ def delete_from_favorites(label):
     if len(storage.favorite_plugins) > 1:
         dpg.set_item_height("add_plugins_window", dpg.get_item_height("add_plugins_window") - 28)
 
-def add_plugin_settings(interface, name, title):
+def add_plugin_settings(interface, name, title, extra_settings=None):
     width = 200
     for field in interface:
         if field['type'] != 'checkbox':
@@ -173,6 +189,7 @@ def add_plugin_settings(interface, name, title):
         settings = {'min_value': 1, 'max_value': 999, 'int': False}
         default_value = field.get('default_value')
         var = field['var']
+        extra_settings_var = extra_settings and extra_settings.get(var)
 
         # если необходима перезагрузка тяжёлого объекта
         def set_settings_with_reload(sender, app_data, user_data):
@@ -186,12 +203,13 @@ def add_plugin_settings(interface, name, title):
             callback = set_settings_with_reload
 
         if field['type'] == "input":
+            DEFAULT_VALUE = extra_settings_var or default_value or ""
             if not field.get('settings') is None:
                 if not field['settings'].get('multiline') is None:
                     multiline = field['settings']['multiline']
-            dpg.add_input_text(default_value=default_value or "", multiline=multiline, 
-            callback=callback, user_data=field['var'], width=width)
-            storage.set_plugin_settings(title, var, default_value or "")
+            dpg.add_input_text(default_value=DEFAULT_VALUE, multiline=multiline, callback=callback, 
+            user_data=field['var'], width=width)
+            storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
         if field['type'] == "file":
             with dpg.add_group(horizontal=True):
@@ -207,17 +225,17 @@ def add_plugin_settings(interface, name, title):
                     settings['max_value'] = field['settings']['max']
                 if not field['settings'].get('int') is None:
                     settings['int'] = field['settings']['int']
+            DEFAULT_VALUE = extra_settings_var or default_value or 0
             if settings['int']:
                 dpg.add_slider_int(min_value=settings['min_value'], max_value=settings['max_value'], 
-                default_value=default_value or 0, callback=callback, user_data=field['var'], width=width)
+                default_value=DEFAULT_VALUE, callback=callback, user_data=field['var'], width=width)
             else:
                 dpg.add_slider_float(min_value=settings['min_value'], max_value=settings['max_value'], format="%.3g",
-                default_value=default_value or 0, callback=callback, user_data=field['var'], width=width)
-            storage.set_plugin_settings(title, var, default_value or 0)
+                default_value=DEFAULT_VALUE, callback=callback, user_data=field['var'], width=width)
+            storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
         if field['type'] == '2d-point':
             # задание двух слайдеров от x до y
-            # TODO: переделать для назначения сразу в настройки
             def set_settings_to_point(sender, app_data, user_data):
                 current_node = dpg.get_item_parent(dpg.get_item_parent(dpg.get_item_parent(sender)))
                 current_plugin_label = dpg.get_item_label(current_node)
@@ -236,8 +254,7 @@ def add_plugin_settings(interface, name, title):
                 settings["y_min"] = field["settings"].get("y_min") or 0
                 settings["y_max"] = field["settings"].get("y_max") or 480
 
-            if default_value is None:
-                default_value = [0, 0]
+            DEFAULT_VALUE = extra_settings_var or default_value or [0, 0]
 
             with dpg.group(horizontal=True):
                 crosshair = False
@@ -247,10 +264,10 @@ def add_plugin_settings(interface, name, title):
                     crosshair = True
                     field_width = width / 2 - 24
                 dpg.add_input_int(min_value=settings["x_min"], max_value=settings["x_max"], 
-                default_value=default_value[0], callback=set_settings_to_point, user_data=['x', field['var']]
+                default_value=DEFAULT_VALUE[0], callback=set_settings_to_point, user_data=['x', field['var']]
                 , width=field_width, min_clamped=True, max_clamped=True, step=0)
                 dpg.add_input_int(min_value=settings["y_min"], max_value=settings["y_max"], 
-                default_value=default_value[1], callback=set_settings_to_point, user_data=['y', field['var']]
+                default_value=DEFAULT_VALUE[1], callback=set_settings_to_point, user_data=['y', field['var']]
                 , width=field_width, min_clamped=True, max_clamped=True, step=0)
                 if crosshair:
                     button = dpg.add_image_button("crosshair_img", width=15, height=15, 
@@ -258,27 +275,30 @@ def add_plugin_settings(interface, name, title):
                     dpg.bind_item_theme(dpg.last_item(), "get_crosshair_button_theme")
                     with dpg.tooltip(button):
                         dpg.add_text("Наведите на изображение и нажмите в нужном месте")
-                storage.set_plugin_settings(title, var, default_value)
+                storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
         if field['type'] == 'checkbox':
+            DEFAULT_VALUE = extra_settings_var or default_value or False
             if not field.get('description') is None:
                 with dpg.group(horizontal=True, horizontal_spacing=5):
-                    dpg.add_checkbox(label=field['title'], default_value=default_value or False, callback=callback, 
+                    dpg.add_checkbox(label=field['title'], default_value=DEFAULT_VALUE, callback=callback, 
             user_data=field['var'])
                     dpg.add_image("help_mini")
                     dpg.add_tooltip(dpg.last_item())
                     dpg.add_text(field['description'], parent=dpg.last_item())
             else:
-                dpg.add_checkbox(label=field['title'], default_value=default_value or False, callback=callback, 
+                dpg.add_checkbox(label=field['title'], default_value=DEFAULT_VALUE, callback=callback, 
             user_data=field['var'])
-            storage.set_plugin_settings(title, var, default_value or False)
+            storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
         if field['type'] == 'combo':
+            DEFAULT_VALUE = extra_settings_var or default_value or field['settings'][0]
             dpg.add_combo(items=field['settings'], callback=callback, user_data=field['var'], 
-            default_value=default_value or field['settings'][0], width=width)
-            storage.set_plugin_settings(title, var, default_value or field['settings'][0])
+            default_value=DEFAULT_VALUE, width=width)
+            storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
         if field['type'] == 'number':
+            DEFAULT_VALUE = extra_settings_var or default_value or min(0, settings['min_value'])
             if not field.get('settings') is None:
                 if not field['settings'].get('min') is None:
                     settings['min_value'] = field['settings']['min']
@@ -287,12 +307,12 @@ def add_plugin_settings(interface, name, title):
                 if not field['settings'].get('int') is None:
                     settings['int'] = field['settings']['int']
             if settings['int']:
-                dpg.add_input_int(default_value=default_value or min(0, settings['min_value']), callback=callback, 
+                dpg.add_input_int(default_value=DEFAULT_VALUE, callback=callback, 
                 user_data=field['var'], min_value=settings['min_value'], max_value=settings['max_value'], width=width)
             else:
-                dpg.add_input_float(default_value=default_value or min(0, settings['min_value']), callback=callback, 
+                dpg.add_input_float(default_value=DEFAULT_VALUE, callback=callback, 
                 user_data=field['var'], min_value=settings['min_value'], max_value=settings['max_value'], width=width, format="%.3g")
-            storage.set_plugin_settings(title, var, default_value or min(0, settings['min_value']))
+            storage.set_plugin_settings(title, var, DEFAULT_VALUE)
 
 def plugin_node_menu_item(text, tag, selected=False, disabled=False, mode=None, all_frames=None, group=None):
     with dpg.child_window(width=259, height=32, parent="modes_of_processing", tag=f"{tag}_plugin_menu_item",

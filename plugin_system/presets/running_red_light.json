@@ -1,0 +1,34 @@
+{
+	"name": "Переход на красный свет",
+	"plugins": [
+		{
+			"title": "Контур пешеходного перехода",
+			"settings": {"point_one": [283, 135], "point_two": [498, 122], "point_three": [616, 187], "point_four": [536, 225], "color": "Красный", "display": false}
+		},
+		{
+			"title": "Контур дороги",
+			"settings": {"point_one": [534, 225], "point_two": [262, 360], "point_three": [2, 286], "point_four": [281, 137], "color": "Жёлтый", "display": false}
+		},
+		{
+			"title": "Контур дороги",
+			"settings": {"point_one": [500, 120], "point_two": [614, 182], "point_three": [655, 168], "point_four": [653, 87], "color": "Жёлтый", "display": false}
+		},
+		{
+			"title": "Распознавание светофоров",
+			"settings": {"threshold": 0.4, "display": false}
+		}
+		,
+		{
+			"title": "Информация о цвете светофора",
+			"settings": {"threshold": 0.01, "traffic_light_number": 1, "write_to_image": true}
+		}
+		,
+		{
+			"title": "Распознавание машин",
+			"settings": {"display": false}
+		},
+		{
+			"title": "Проезд на красный свет"
+		}
+	]
+}

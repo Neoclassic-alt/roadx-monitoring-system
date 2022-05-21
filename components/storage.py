@@ -7,6 +7,8 @@ class storage:
     plugins_settings = {} # установленные настройки плагинов
     favorite_plugins = [] # плагины в "избранном"
 
+    presets = []
+
     all_frames = False
     process_mode = "one" # режим обработки, подробнее в классе PROCESS_MODES
     process_actual_again = False # нужно ли обрабатывать повторно актуальные файлы
@@ -306,6 +308,13 @@ class storage:
 
     def add_to_process_timer(frame_time):
         storage.processed_time += frame_time
+
+    def add_preset(preset):
+        storage.presets.append(preset)
+
+    def get_preset(name):
+        g = (preset for preset in storage.presets if preset["name"] == name)
+        return next(g)
 
 class OBJECT_TYPES:
     image = "image"

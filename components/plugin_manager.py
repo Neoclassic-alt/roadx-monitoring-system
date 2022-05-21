@@ -1,5 +1,4 @@
 import dearpygui.dearpygui as dpg
-import components.utils as utils
 import components.photo_video as pv
 from components.storage import OBJECT_STATUSES, storage
 from components.storage import keys
@@ -39,6 +38,15 @@ def load_plugins():
                 plugins[f8ile]['payload'] = module.load_heavy
     return plugins
 
+def load_presets():
+    PATH_TO_PRESETS = "plugin_system/presets"
+    all_files = os.listdir('.\plugin_system\presets')
+    all_json_files = [file for file in all_files if file.endswith('.json')]
+    for file in all_json_files:
+        with open(f"{PATH_TO_PRESETS}/{file}", "r", encoding='utf-8') as preset_file:
+            preset = json.load(preset_file)
+            storage.add_preset(preset)
+    
 def set_titles_to_names():
     for key in list(storage.plugins.keys()):
         storage.set_titles_to_names(storage.plugins[key]['info']['title'], key)
@@ -160,10 +168,13 @@ def toggle_node_settings(sender, app_data, user_data):
         dpg.set_item_label(sender, "Раскрыть")
     dpg.set_item_user_data(sender, user_data)
 
-def add_plugin(label):
+def add_plugin(label, settings=None, order=None):
     x_scroll = dpg.get_x_scroll("plugin_node_editor_window")
     content_region_avail = dpg.get_item_state("plugin_node_editor_window")['content_region_avail']
-    pos_x = content_region_avail[0] / 2 + x_scroll
+    if order is None:
+        pos_x = content_region_avail[0] / 2 + x_scroll
+    else:
+        pos_x = x_scroll + order*250 + 250
     current_plugin = storage.plugins_titles_to_names[label]
     interface = storage.plugins[current_plugin].get('interface')
     payload = storage.plugins[current_plugin].get('payload')
@@ -180,7 +191,8 @@ def add_plugin(label):
                 dpg.bind_item_font(id_group, "tooltip_font")
         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static) as plugin_settings:
             if not interface is None:
-                cc.add_plugin_settings(interface, name=current_plugin, title=f"{label}##{plugin_id}")
+                cc.add_plugin_settings(interface, name=current_plugin, title=f"{label}##{plugin_id}", 
+                extra_settings=settings)
             else:
                 dpg.add_text("Нет настроек")
                 dpg.bind_item_font(dpg.last_item(), "mini_node_italic")
@@ -197,32 +209,37 @@ def add_plugin(label):
                 dpg.add_text("Результат обработки")
         #dpg.enable_item("save_to_file_button")
         dpg.enable_item("open_warning_clear_desk_button")
+        dpg.show_item("preset_warning")
     show_previous()
+    return plugin_id
+
+def add_preset(name):
+    clear_desk()
+    node_prev_output_attr = None
+    node_input_attr = None
+    preset = storage.get_preset(name)["plugins"]
+    for i, plugin in enumerate(preset):
+        plugin_node = add_plugin(plugin["title"], settings=plugin.get("settings"), order=i)
+        node_input_attr = dpg.get_item_children(plugin_node, slot=1)[-2]
+        if node_prev_output_attr is None:
+            node_prev_output_attr = dpg.get_item_children("node_input_image", slot=1)[0]
+            dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
+            node_prev_output_attr = dpg.get_item_children(plugin_node, slot=1)[-1]
+        else:
+            dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
+            node_prev_output_attr = dpg.get_item_children(plugin_node, slot=1)[-1]
+
+    node_input_attr = dpg.get_item_children("node_output_image", slot=1)[0]
+    dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
+    
+    dpg.show_item("preset_warning")
+    dpg.hide_item("add_presets_window")
    
-def open_chain_from_file(sender, app_data, user_data):
-    file_path = app_data["file_path_name"]
-    with open(file_path, "r", encoding="utf-8") as json_file:
-        chain = json.load(json_file)
-    storage.clear_chain()
-    dpg.configure_item("plugins_in_chain", items=[])
-
-    ### Процесс преобразования инструкций в конкретный результат
-    for instruction in chain:
-        plugin_title = storage.plugins[instruction["name"]]['info']['title']
-        plugin_name = instruction["name"]
-        if not instruction.get("duplicate") is None and instruction["duplicate"]:
-            plugin_name, plugin_title = duplicate_plugin(title=plugin_title)
-        add_plugin(title=plugin_title)
-        ## копирование настроек
-        if not instruction.get("settings") is None:
-            storage.plugin_set_settings(plugin_name, instruction["settings"])
-
 # триггер при закрытии окна
 def on_close(sender, app_data, user_data):
     dpg.delete_item("settings_have_saved_text" + str(user_data))
     if storage.crosshair[0]:
         dpg.delete_item("image_mouse_tooltip")
-        #dpg.bind_item_handler_registry("main_image_desk", "none_handler")
         dpg.hide_item("image_handler_registry")
         storage.set_value(keys.CROSSHAIR, [False, None, None])
 
@@ -310,9 +327,10 @@ def clear_desk():
 
     #storage.set_initial_nodes(node_input_image, node_output_image)
     dpg.disable_item("open_warning_clear_desk_button")
-    dpg.disable_item("save_to_file_button")
+    #dpg.disable_item("save_to_file_button")
     dpg.disable_item("begin_processing_button")
     dpg.hide_item("warning_clear_desk")
+    dpg.hide_item("preset_warning")
     storage.clear_initial_inputs()
 
 def link_nodes(sender, app_data):
