@@ -6,7 +6,6 @@ class storage:
     plugins_titles_to_names = {}
     plugins_settings = {} # установленные настройки плагинов
     favorite_plugins = [] # плагины в "избранном"
-
     presets = []
 
     all_frames = False
@@ -56,6 +55,8 @@ class storage:
     actions = []
 
     video_timer = 0 # отсчитывает время с момента движения мыши
+
+    violation_cases = {} # индексы кадров видео в виде списка {'Имя плагина': [кадры нарушений]}
 
     def write_action(func):
         def wrapper(*args):
@@ -315,6 +316,14 @@ class storage:
     def get_preset(name):
         g = (preset for preset in storage.presets if preset["name"] == name)
         return next(g)
+
+    def add_violation(index, plugin):
+        if storage.violation_cases.get(plugin) is None:
+            storage.violation_cases[plugin] = []
+        storage.violation_cases[plugin].append(index)
+
+    def clear_violations():
+        storage.violation_cases.clear()
 
 class OBJECT_TYPES:
     image = "image"

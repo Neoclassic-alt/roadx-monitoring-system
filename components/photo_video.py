@@ -84,11 +84,14 @@ def process_image(data, single_image=True, index=None):
         app_info = {"heavy": heavy, "frame_rate": storage.frame_rate, "frame_index": index, 
         'type': storage.current_object['type'], 'mode': mode}
         start = time.perf_counter()
-        #print("Add_data: ", storage.additional_data)
-        if not storage.additional_data.get(index) is None and len(storage.additional_data[index]) >= 1 and not index is None:
+
+        if not index is None and not storage.additional_data.get(index) is None and len(storage.additional_data[index]) >= 1:
             app_info["additional_data"] = storage.additional_data[index]
+            dpg.hide_item("no_image_data_text")
+            dpg.show_item("image_index_slider_group")
         if index is None and not storage.additional_data.get(0) is None and len(storage.additional_data[0]) >= 1:
             app_info["additional_data"] = storage.additional_data[0]
+            dpg.hide_item("no_image_data_text")
         apply = storage.plugins[plugin]['transform']
         ready = None
         ready = apply(data, parameters["settings"], app_info)
@@ -99,6 +102,8 @@ def process_image(data, single_image=True, index=None):
             storage.add_additional_data(0, {'text': ready['additional_data'], 'plugin': plugin_title})
         if not ready.get('video_data') is None:
             storage.add_video_data(ready['video_data'], plugin_title)
+        if not ready.get('violation') is None and ready['violation']:
+            storage.add_violation(index, plugin_title)
         end = time.perf_counter()
         process_times.append(end - start)
     storage.add_time_data(process_times)
@@ -178,6 +183,7 @@ def open_cv(object, activate=False):
 
         count_of_frames = len(os.listdir(temp_folder_path))
         storage.set_value(keys.TOTAL_FRAMES, count_of_frames)
+        dpg.configure_item("image_index_slider", max_value=storage.total_frames)
         dpg.set_value("time_video_from_begin", "0:00")
         seconds = storage.total_frames // storage.frame_rate
         minutes = seconds // 60
@@ -312,6 +318,7 @@ def process_all_frames():
 
     storage.clear_video_data()
     storage.clear_time_data()
+    storage.clear_violations()
 
     for i in range(storage.total_frames):
         data = cv2.imread(f"{temp_folder_path}/{i}.jpg") # чтение из основной папки
@@ -328,16 +335,20 @@ def process_all_frames():
     dpg.configure_item("plots_combo", items=["(Нет)"])
 
     if storage.program_settings["display_video_process"] and len(storage.video_data) > 0:
-        print(storage.video_data)
         inf.create_plots()
         cc.enable_button("information_button", "information_button_text")
         dpg.hide_item("no_plots_text")
         dpg.show_item("red_point_image")
         dpg.set_item_width("information_button", 124)
         dpg.show_item("plot_combo_group")
+        dpg.show_item("plots_combo")
     else:
         dpg.show_item("no_plots_text")
         dpg.hide_item("plot_combo_group")
+        dpg.show_item("plots_combo")
+
+    inf.show_image_data_frame(None, 0)
+    inf.show_violations()
     
     if storage.program_settings["send_signal"]:
         beepy.beep(sound='ready')

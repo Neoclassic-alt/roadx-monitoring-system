@@ -147,8 +147,6 @@ width=827, height=476, min_size=(767, 350), on_close=lambda: dpg.hide_item("plug
 dpg.bind_item_theme("plugins_window", "window_theme")
 dpg.bind_item_handler_registry("plugins_window", "resize_node_plugins_window_handler")
 
-print(storage.initial_nodes_id)
-
 #! Окно добавления плагинов
 with dpg.window(label="Добавить плагин", show=False, pos=(300, 100), tag="add_plugins_window", 
 width=320, height=427, modal=True):
@@ -288,7 +286,7 @@ min_size=(400, 204), max_size=(800, 204), user_data={"error": False}):
             with dpg.group(horizontal=True, horizontal_spacing=3):
                 dpg.add_text("Номер потока с нуля")
                 dpg.add_spacer(width=4)
-                dpg.add_input_int(tag="camera_number", width=-10, step=1, min_value=0)
+                dpg.add_input_int(tag="camera_number", width=-10, step=1, min_value=0, min_clamped=True)
         with dpg.group(tag="IP-camera_group", show=False):
             with dpg.group(horizontal=True, horizontal_spacing=3):
                 dpg.add_text("Адрес IP-камеры")
@@ -604,14 +602,14 @@ dpg.bind_item_theme("file_explorer_window", "window_theme")
 
 #! окно с информацией в результате обработки
 with dpg.window(label="Информация, полученная в результате обработки", show=False, pos=(100, 100), 
-no_resize=True, tag="information_window", width=897, height=423):
+no_resize=True, tag="information_window", width=907, height=423):
     with dpg.group(tag="information_tab_bar"):
         with dpg.tab_bar():
-            with dpg.tab(label="Видео", indent=10, tag="information_video_tab"):
+            with dpg.tab(label="   Видео", indent=20, tag="information_video_tab"):
                 dpg.add_text("Графики")
                 dpg.bind_item_font(dpg.last_item(), "tab_title")
                 dpg.add_color_button((64, 149, 227), width=46, height=3, no_drag_drop=True, 
-                no_border=True, pos=(10, 69))
+                no_border=True, pos=(22, 69))
                 with dpg.child_window(horizontal_scrollbar=True):
                     dpg.add_text('В настоящее время здесь ничего нет', tag="no_plots_text")
                     dpg.bind_item_font("no_plots_text", "mini_italic")
@@ -621,16 +619,46 @@ no_resize=True, tag="information_window", width=897, height=423):
                         with dpg.group():
                             dpg.add_spacer()
                             dpg.add_text("Раскрыть на полный экран:")
-                        dpg.add_combo(["(Нет)"], tag="plots_combo", default_value="(Нет)", 
-                        width=350, callback=inf.open_plugin_window)
-                        dpg.bind_item_theme("plots_combo", themes.combo_style())
-            with dpg.tab(label="Изображение", indent=10, tag="information_image_tab"):
+                dpg.add_combo(["Не выбрано"], tag="plots_combo", default_value="Не выбрано", width=350, 
+                callback=inf.open_plugin_window, show=False)
+                dpg.bind_item_theme("plots_combo", themes.combo_style())
+            with dpg.tab(label="Изображение", indent=20, tag="information_image_tab"):
                 dpg.add_text("Информация от плагинов")
                 dpg.bind_item_font(dpg.last_item(), "tab_title")
                 dpg.add_color_button((64, 149, 227), width=102, height=3, no_drag_drop=True, 
-                no_border=True, pos=(82, 69))
+                no_border=True, pos=(94, 69))
+                dpg.add_text('В настоящее время здесь ничего нет', tag="no_image_data_text")
+                dpg.bind_item_font("no_image_data_text", "mini_italic")
+                with dpg.group(tag="image_index_slider_group", show=True):
+                    dpg.add_text("Выберите номер кадра:")
+                    with dpg.group(horizontal=True):
+                        dpg.add_slider_int(tag="image_index_slider", min_value=1, max_value=944, clamped=True, 
+                        callback=inf.show_image_data_frame, width=-175)
+                        dpg.add_button(label="Перейти к кадру", callback=lambda: pv.open_frame(dpg.get_value("image_index_slider")))
+                    dpg.add_spacer(height=5)
+                dpg.bind_item_theme("image_index_slider_group", themes.slider_theme())
+                dpg.add_group(tag="info_from_image")
+                dpg.bind_item_theme("info_from_image", themes.image_data())
+            with dpg.tab(label="Фиксация", indent=20, tag="violations_tab"):
+                dpg.add_color_button((64, 149, 227), width=73, height=3, no_drag_drop=True, 
+                no_border=True, pos=(221, 69))
+                dpg.add_text("Перейти к кадру")
+                dpg.bind_item_font(dpg.last_item(), "tab_title")
+                dpg.add_text('В данном видео не зафиксировано нарушений', tag="no_violations_text")
+                dpg.bind_item_font("no_violations_text", "mini_italic")
+                dpg.add_group(tag="fixed_violations")
+                dpg.bind_item_theme("fixed_violations", themes.slider_theme())
+                dpg.add_text("Минимальная длина диазапона - N кадров", tag="minimal_range_size_text", show=True)
+                dpg.bind_item_font("minimal_range_size_text", "mini_font")
+                with dpg.group(horizontal=True, horizontal_spacing=6):
+                    dpg.add_text("Открыть кадр в")
+                    with dpg.group():
+                        dpg.add_spacer()
+                        dpg.add_combo(("начале", "середине", "конце"), default_value="начале", 
+                        tag="place_open_in_range", width=125)
+                    dpg.bind_item_theme("place_open_in_range", "combo_style_2")
+                    dpg.add_text("диапазона")
         dpg.bind_item_theme("information_tab_bar", themes.tabs_outline())
-
 dpg.bind_item_theme("information_window", "window_theme")
 
 with dpg.window(label="Предупреждение", show=False, tag="please_connect_flash", pos=(400, 300), no_resize=True, no_collapse=True):
@@ -711,7 +739,7 @@ dpg.bind_item_theme("objects_window", themes.null_padding_primary_window())
 #dpg.show_metrics()
 warnings.filterwarnings("ignore") # игнорирование предупреждений
 
-dpg.create_viewport(title='RoadX Watching System', width=1000, height=600, x_pos=350, y_pos=150)
+dpg.create_viewport(title='RoadX Watching System', width=1280, height=720, x_pos=350, y_pos=150)
 dpg.set_viewport_resize_callback(callback=inf.resize_viewport)
 
 dpg.set_viewport_small_icon("assets/images/app.ico")
@@ -760,13 +788,23 @@ while dpg.is_dearpygui_running():
         storage.add_to_process_timer(dpg.get_delta_time())
         minutes = storage.processed_time // 60
         seconds = storage.processed_time % 60
-        dpg.set_value("time_from_begin", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
+        hours = minutes // 60
+        if hours > 0:
+            minutes = minutes - int(hours)*60
+            dpg.set_value("time_from_begin", "{0:2d}:{1:02d}:{2:02d}".format(int(hours), int(minutes), int(seconds)))
+        else:
+            dpg.set_value("time_from_begin", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
         if storage.is_divisible and dpg.get_frame_count() % 30 == 0:
             if storage.processed_time > 6 and storage.part_of_process > 0.02:
                 remaining_time = (1 / storage.part_of_process - 1) * storage.processed_time
                 minutes = remaining_time // 60
                 seconds = remaining_time % 60
-                dpg.set_value("possible_time_ending", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
+                hours = minutes // 60
+                if hours > 0:
+                    minutes = minutes - int(hours)*60
+                    dpg.set_value("possible_time_ending", "{0:2d}:{1:02d}:{2:02d}".format(int(hours), int(minutes), int(seconds)))
+                else:
+                    dpg.set_value("possible_time_ending", "{0:02d}:{1:02d}".format(int(minutes), int(seconds)))
             else:
                 dpg.set_value("possible_time_ending", "Оценивается...")
 

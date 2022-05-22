@@ -46,23 +46,10 @@ def get_theme():
 
         dpg.add_theme_style(dpg.mvPlotStyleVar_LegendInnerPadding, 8, 6, category=dpg.mvThemeCat_Plots)
         
-        dpg.add_theme_color(dpg.mvPlotCol_FrameBg, (154, 214, 233), category=dpg.mvThemeCat_Plots)
+        dpg.add_theme_color(dpg.mvPlotCol_FrameBg, (237, 245, 252), category=dpg.mvThemeCat_Plots)
         dpg.add_theme_color(dpg.mvPlotCol_PlotBg, (255, 255, 255), category=dpg.mvThemeCat_Plots)
         dpg.add_theme_color(dpg.mvPlotCol_LegendBg, (235, 250, 255), category=dpg.mvThemeCat_Plots)
         
-        #dpg.add_theme_color(dpg.mvPlotCol_)
-
-    #with dpg.theme_component(parent=theme):
-    #    dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0, category=dpg.mvThemeCat_Core)
-    #    dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0, category=dpg.mvThemeCat_Core)
-    #    dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0, category=dpg.mvThemeCat_Core)
-    #    dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, (255, 255, 255))
-    #with dpg.theme_component(dpg.mvDragPayload, parent=theme):
-    #    dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0, category=dpg.mvThemeCat_Core)
-        #dpg.add_theme_style(dpg.mvStyleVar_Pa, 0, 0, category=dpg.mvThemeCat_Core)
-    #    dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0, category=dpg.mvThemeCat_Core)
-    #    dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 0, category=dpg.mvThemeCat_Core)
-
     with dpg.theme_component(dpg.mvChildWindow, parent=theme, enabled_state=True):
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0, category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0, category=dpg.mvThemeCat_Core)
@@ -358,6 +345,8 @@ def window_theme():
             dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 10, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
 
 def window_rounding():
     theme = dpg.add_theme()
@@ -551,6 +540,7 @@ def combo_style():
         dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, (221, 249, 235), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, (165, 238, 203), category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_PopupRounding, 8, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (237, 237, 237), category=dpg.mvThemeCat_Core)
     return theme
 
 def popup_style():
@@ -576,6 +566,32 @@ def duplicate_button():
             dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 2, category=dpg.mvThemeCat_Core)
 
+def slider_theme():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvSliderInt, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 6, category=dpg.mvThemeCat_Core)
+    with dpg.theme_component(dpg.mvButton, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1, category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_Border, (64, 149, 227), category=dpg.mvThemeCat_Core)
+    return theme
+
+def image_data():
+    theme = dpg.add_theme()
+    with dpg.theme_component(dpg.mvAll, parent=theme):
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 1, 1, category=dpg.mvThemeCat_Core)
+    return theme
+
+def combo_style_2():
+    with dpg.theme(tag="combo_style_2"):
+        with dpg.theme_component(dpg.mvCombo):
+            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (246, 246, 246), category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_PopupRounding, 8, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 8, 8, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (246, 246, 246), category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (237, 237, 237), category=dpg.mvThemeCat_Core)
+
 ########################
 
 def launch_themes():
@@ -594,3 +610,4 @@ def launch_themes():
     active_button_theme()
     popup_style()
     duplicate_button()
+    combo_style_2()

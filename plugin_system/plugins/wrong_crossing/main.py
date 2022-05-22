@@ -8,7 +8,6 @@ from plugin_system.common.functions import intersect_detecting
 # функция, непосредственно обрабатывающая изображение
 def edit_image(img, parameters, app_info):
     additional_data = app_info["additional_data"]
-    print(additional_data)
     persons = [x for x in additional_data if x['plugin'].startswith('Распознавание людей')]
     pedestrian_crossings = [x for x in additional_data if x['plugin'].startswith('Контур пешеходного перехода')]
     roads = [x for x in additional_data if x['plugin'].startswith('Контур дороги')]
@@ -99,7 +98,7 @@ def edit_image(img, parameters, app_info):
                 series = 1
                 count = violate_count
             return {'image': img, 'additional_data': f'Соблюдают правила дорожного движения {observe_count} пешеходов, нарущают правила {violate_count} пешеходов',
-            'video_data': (frame_index/frame_rate, count, series)}
+            'video_data': (frame_index/frame_rate, count, series), 'violation': violate_count > 0}
 
     if app_info['type'] == 'image':
         if len(pedestrian_statuses) > 0 and pedestrian_statuses[0] == 'undefined':

@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
+import components.photo_video as pv
 from components.storage import storage, keys
-import pyperclip as clipboard
+import components.utils as utils
 import components.styling as themes
 import components.interface_functions as inf
 import os
@@ -118,6 +119,7 @@ def create_plots():
     # графики скорости обработки
     items = dpg.get_item_configuration("plots_combo")["items"]
     items.append("Скорость обработки плагинами")
+    dpg.configure_item("plots_combo", items=items)
     plot = dpg.add_plot(label="Скорость обработки плагинами", height=250, width=375, parent="video_plots_group", no_mouse_pos=True)
     dpg.add_plot_axis(dpg.mvXAxis, label='Номер кадра', parent=plot)
     #dpg.add_plot_legend(parent=plot)
@@ -148,12 +150,18 @@ def create_plots():
     dpg.add_plot_annotation(label=total_time_text, default_value=(storage.total_frames - 1, sum_last_plugin), 
     offset=(-15, -15), color=(113, 226, 0, 150), parent=plot, clamped=False)
 
+    if len(storage.video_data) >= 3:
+        dpg.set_item_height("information_window", height=433)
+
 def open_plugin_window(sender):
     dpg.show_item("plugin_window")
     dpg.delete_item("plugin_window", children_only=True)
+    viewport_height = dpg.get_viewport_client_height()
+    viewport_width = dpg.get_viewport_client_width()
+    dpg.set_item_pos("plugin_window", ((viewport_width - 760) / 2, (viewport_height - 550) / 2))
     children = dpg.get_item_children("video_plots_group", slot=1)
     plot_label = dpg.get_value(sender)
-    if plot_label == "(Нет)":
+    if plot_label == "Не выбрано":
         return
     plot_item = None
     for child in children:
@@ -250,12 +258,6 @@ def open_window_at_center(tag, parent_tag="objects_window"):
     pos = [(dpg.get_item_width(parent_tag) - dpg.get_item_width(tag)) / 2, 
     (dpg.get_item_height(parent_tag) - dpg.get_item_height(tag)) / 2]
     dpg.set_item_pos(tag, pos)
-
-#def open_add_plugin_window():
-#    dpg.show_item("add_plugins_window")
-#    pos = [(dpg.get_item_width("plugins_window") - dpg.get_item_width("add_plugins_window")) / 2, 
-#    (dpg.get_item_height("plugins_window") - dpg.get_item_height("add_plugins_window")) / 2]
-#    dpg.set_item_pos("add_plugins_window", pos)
 
 def open_warning_clear_desk():
     dpg.show_item("warning_clear_desk")
@@ -364,3 +366,60 @@ def change_camera_fields(sender, app_data, user_data):
             dpg.configure_item("connect_to_camera_window", height=311, min_size=(400, 311), max_size=(1000, 311))
         if len(dpg.get_value("camera_url")) == 0:
             dpg.disable_item("add_camera_button")
+
+def show_image_data_frame(sender, app_data):
+    dpg.delete_item("info_from_image", children_only=True)
+    info = storage.additional_data.get(app_data)
+    if not info is None:
+        for plugin in info:
+            part = plugin["plugin"].rpartition('##')
+            dpg.add_text(f"{part[0]} (ID {part[2]})", parent="info_from_image", wrap=-20)
+            if len(plugin["text"]):
+                dpg.add_text(plugin["text"], parent="info_from_image", wrap=-20)
+                dpg.bind_item_font(dpg.last_item(), "mini_font")
+            else:
+                dpg.add_text("Информации нет", parent="info_from_image", wrap=-20)
+                dpg.bind_item_font(dpg.last_item(), "mini_italic")
+            dpg.add_spacer(height=5, parent="info_from_image")
+    else:
+            dpg.add_text("Для данного изображении нет информации", parent="info_from_image", wrap=-20)
+
+def show_violations():
+    dpg.delete_item("fixed_violations", children_only=True)
+    if len(storage.violation_cases):
+        THRESHOLD_TIME = 0.5 # коэффициент отсеивания в секундах
+        FRAME_RATE = storage.frame_rate # кол-во кадров в секунду
+        THRESHOLD = int(FRAME_RATE*THRESHOLD_TIME) # минимальная ширина диапазона
+        plural_form = utils.plural(THRESHOLD, "кадр", "кадра", "кадров")
+        dpg.hide_item("no_violations_text")
+        dpg.show_item("minimal_range_size_text")
+        dpg.set_value("minimal_range_size_text", f"Минимальная длина диазапона – {THRESHOLD} {plural_form}")
+        for plugin, indexes in storage.violation_cases.items():
+            name, _, id = plugin.rpartition('##')
+            with dpg.group(horizontal=True, horizontal_spacing=5, parent="fixed_violations"):
+                dpg.add_text(name)
+                dpg.bind_item_font(dpg.last_item(), "tab_title")
+                with dpg.group():
+                    dpg.add_spacer()
+                    dpg.add_text(f"(ID: {id})")
+                dpg.bind_item_font(dpg.last_item(), "mini_font")
+            with dpg.group(horizontal=True, parent="fixed_violations"):
+                dpg.add_text("Выберите кадр нарушения: ")
+                with dpg.group():
+                    dpg.add_spacer()
+                    dpg.add_combo(("Не выбрано", *utils.convert_to_ranges(indexes, THRESHOLD)), width=300, default_value="Не выбрано", 
+                    callback=open_violation_frames)
+                    dpg.bind_item_theme(dpg.last_item(), "combo_style_2")
+            dpg.add_spacer(height=3, parent="fixed_violations")
+    else:
+        dpg.show_item("no_violations_text")
+        dpg.hide_item("minimal_range_size_text")
+
+def open_violation_frames(sender, app_data):
+    # TODO: для случаев середины и конца доделать
+    if app_data == "Не выбрано":
+        return
+    position = dpg.get_value("place_open_in_range")
+    if position == "начале":
+        frame = int(app_data.split('-')[0])
+    pv.open_frame(int(frame))

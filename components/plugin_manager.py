@@ -122,7 +122,9 @@ def apply_chain():
         pv.open_cv(storage.current_object)
     if storage.current_object['type'] == OBJECT_TYPES.video:
         if storage.all_frames:
+            dpg.disable_item("begin_processing_button")
             pv.process_all_frames()
+            dpg.enable_item("begin_processing_button")
         pv.open_frame(storage.current_frame)
     storage.set_status(OBJECT_STATUSES.actual)
 
@@ -174,7 +176,7 @@ def add_plugin(label, settings=None, order=None):
     if order is None:
         pos_x = content_region_avail[0] / 2 + x_scroll
     else:
-        pos_x = x_scroll + order*250 + 250
+        pos_x = x_scroll + (order + 1)*250
     current_plugin = storage.plugins_titles_to_names[label]
     interface = storage.plugins[current_plugin].get('interface')
     payload = storage.plugins[current_plugin].get('payload')
@@ -223,17 +225,20 @@ def add_preset(name):
         node_input_attr = dpg.get_item_children(plugin_node, slot=1)[-2]
         if node_prev_output_attr is None:
             node_prev_output_attr = dpg.get_item_children("node_input_image", slot=1)[0]
-            dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
-            node_prev_output_attr = dpg.get_item_children(plugin_node, slot=1)[-1]
+            link_nodes("plugin_node_editor", (node_prev_output_attr, node_input_attr))
         else:
-            dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
-            node_prev_output_attr = dpg.get_item_children(plugin_node, slot=1)[-1]
+            link_nodes("plugin_node_editor", (node_prev_output_attr, node_input_attr))
+        node_prev_output_attr = dpg.get_item_children(plugin_node, slot=1)[-1]
 
     node_input_attr = dpg.get_item_children("node_output_image", slot=1)[0]
-    dpg.add_node_link(node_prev_output_attr, node_input_attr, parent="plugin_node_editor")
+    link_nodes("plugin_node_editor", (node_prev_output_attr, node_input_attr))
+    x_scroll = dpg.get_x_scroll("plugin_node_editor_window")
+    dpg.set_item_pos("node_output_image", (x_scroll + (len(preset) + 1)*250, 50))
     
     dpg.show_item("preset_warning")
     dpg.hide_item("add_presets_window")
+    if not storage.current_object is None:
+        dpg.enable_item("begin_processing_button")
    
 # триггер при закрытии окна
 def on_close(sender, app_data, user_data):
@@ -327,11 +332,11 @@ def clear_desk():
 
     #storage.set_initial_nodes(node_input_image, node_output_image)
     dpg.disable_item("open_warning_clear_desk_button")
-    #dpg.disable_item("save_to_file_button")
     dpg.disable_item("begin_processing_button")
     dpg.hide_item("warning_clear_desk")
     dpg.hide_item("preset_warning")
     storage.clear_initial_inputs()
+    storage.clear_node_plugins()
 
 def link_nodes(sender, app_data):
     if not app_data[0] in storage.node_links and not app_data[1] in storage.node_links:

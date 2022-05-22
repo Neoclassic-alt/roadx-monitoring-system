@@ -8,10 +8,10 @@ from plugin_system.common.functions import intersect_detecting
 # функция, непосредственно обрабатывающая изображение
 def edit_image(img, parameters, app_info):
     additional_data = app_info["additional_data"]
-    cars = [x for x in additional_data if x['plugin'] == 'Распознавание машин']
+    cars = [x for x in additional_data if x['plugin'].startswith('Распознавание машин')]
     car_crossings = [x for x in additional_data if x['plugin'].startswith('Контур пешеходного перехода')]
     roads = [x for x in additional_data if x['plugin'].startswith('Контур дороги')]
-    traffic_lights_colors = [x for x in additional_data if x['plugin'] == 'Информация о цвете светофора']
+    traffic_lights_colors = [x for x in additional_data if x['plugin'].startswith('Информация о цвете светофора')]
 
     cars_coordinates = []
     pedestrian_crossings_coordinates = []
@@ -69,7 +69,6 @@ def edit_image(img, parameters, app_info):
         if traffic_light_color[1] == "Yellow" or traffic_light_color[1] == "Red":
             if intersect_detecting(new_car_bottom_points, pedestrian_crossings_coordinates):
                 car_statuses.append("violate")
-                continue
     
     if app_info['type'] == 'video' and app_info['mode'] == 'all':
         frame_index = app_info["frame_index"]
@@ -85,7 +84,7 @@ def edit_image(img, parameters, app_info):
                 series = 1
                 count = violate_count
             return {'image': img, 'additional_data': f'Соблюдают правила дорожного движения {observe_count} машин, нарущают правила {violate_count} машин',
-            'video_data': (frame_index/frame_rate, count, series)}
+            'video_data': (frame_index/frame_rate, count, series), 'violation': violate_count > 0}
 
     if app_info['type'] == 'image' or app_info['mode'] == 'one':
         if len(car_statuses) > 0 and car_statuses[0] == 'undefined':
