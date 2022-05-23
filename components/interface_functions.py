@@ -151,7 +151,7 @@ def create_plots():
     offset=(-15, -15), color=(113, 226, 0, 150), parent=plot, clamped=False)
 
     if len(storage.video_data) >= 3:
-        dpg.set_item_height("information_window", height=433)
+        dpg.set_item_height("information_window", height=453)
 
 def open_plugin_window(sender):
     dpg.show_item("plugin_window")
@@ -387,13 +387,14 @@ def show_image_data_frame(sender, app_data):
 def show_violations():
     dpg.delete_item("fixed_violations", children_only=True)
     if len(storage.violation_cases):
-        THRESHOLD_TIME = 0.5 # коэффициент отсеивания в секундах
+        THRESHOLD_TIME = 1 # коэффициент отсеивания в секундах
         FRAME_RATE = storage.frame_rate # кол-во кадров в секунду
         THRESHOLD = int(FRAME_RATE*THRESHOLD_TIME) # минимальная ширина диапазона
         plural_form = utils.plural(THRESHOLD, "кадр", "кадра", "кадров")
         dpg.hide_item("no_violations_text")
         dpg.show_item("minimal_range_size_text")
-        dpg.set_value("minimal_range_size_text", f"Минимальная длина диазапона – {THRESHOLD} {plural_form}")
+        dpg.set_value("minimal_range_size_text", f"Минимальная длина диазапона: {THRESHOLD} {plural_form}")
+        dpg.show_item("place_open_in_range_group")
         for plugin, indexes in storage.violation_cases.items():
             name, _, id = plugin.rpartition('##')
             with dpg.group(horizontal=True, horizontal_spacing=5, parent="fixed_violations"):
@@ -404,22 +405,30 @@ def show_violations():
                     dpg.add_text(f"(ID: {id})")
                 dpg.bind_item_font(dpg.last_item(), "mini_font")
             with dpg.group(horizontal=True, parent="fixed_violations"):
-                dpg.add_text("Выберите кадр нарушения: ")
+                dpg.add_text("Выберите диапазон кадров: ")
                 with dpg.group():
                     dpg.add_spacer()
-                    dpg.add_combo(("Не выбрано", *utils.convert_to_ranges(indexes, THRESHOLD)), width=300, default_value="Не выбрано", 
-                    callback=open_violation_frames)
+                    dpg.add_combo(("Не выбрано", *utils.convert_to_ranges(indexes, THRESHOLD, FRAME_RATE)), 
+                    width=300, default_value="Не выбрано", callback=open_violation_frames)
                     dpg.bind_item_theme(dpg.last_item(), "combo_style_2")
             dpg.add_spacer(height=3, parent="fixed_violations")
     else:
         dpg.show_item("no_violations_text")
         dpg.hide_item("minimal_range_size_text")
+        dpg.hide_item("place_open_in_range_group")
 
 def open_violation_frames(sender, app_data):
-    # TODO: для случаев середины и конца доделать
     if app_data == "Не выбрано":
         return
     position = dpg.get_value("place_open_in_range")
     if position == "начале":
-        frame = int(app_data.split('-')[0])
+        frame = int(app_data.split('–')[0])
+    elif position == "середине":
+        ttt = app_data.split(' ')[0].split('–')
+        begin = int(ttt[0]) 
+        end = int(ttt[1]) 
+        frame = int((begin + end) / 2)
+    elif position == "конце":
+        ttt = app_data.split(' ')[0].split('–')
+        frame = int(ttt[1])
     pv.open_frame(int(frame))

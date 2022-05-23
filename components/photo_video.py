@@ -92,6 +92,7 @@ def process_image(data, single_image=True, index=None):
         if index is None and not storage.additional_data.get(0) is None and len(storage.additional_data[0]) >= 1:
             app_info["additional_data"] = storage.additional_data[0]
             dpg.hide_item("no_image_data_text")
+            dpg.hide_item("image_index_slider_group")
         apply = storage.plugins[plugin]['transform']
         ready = None
         ready = apply(data, parameters["settings"], app_info)
@@ -334,7 +335,7 @@ def process_all_frames():
     dpg.delete_item("video_plots_group", children_only=True)
     dpg.configure_item("plots_combo", items=["(Нет)"])
 
-    if storage.program_settings["display_video_process"] and len(storage.video_data) > 0:
+    if len(storage.video_data) > 0:
         inf.create_plots()
         cc.enable_button("information_button", "information_button_text")
         dpg.hide_item("no_plots_text")

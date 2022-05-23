@@ -9,7 +9,7 @@ def load_font(url, size, tag = None):
             dpg.add_font_range(0x2190, 0x219e)
             dpg.add_font_range(0x2100, 0x214f)
             dpg.add_font_range(0x2010, 0x2015)
-            dpg.add_font_chars([0x00D7])
+            dpg.add_font_chars([0x00D7, 0x2009])
     else:
         with dpg.font(url, size):
             dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
@@ -46,12 +46,17 @@ def smooth_series(y_series):
 def convert_to_index():
     return round(dpg.get_mouse_pos()[0] / dpg.get_item_width("player_pan") * storage.total_frames)
 
-def convert_to_text_range(range):
-    count_of_frames = range[1] - range[0] + 1
-    plural_form = plural(count_of_frames, "кадр", "кадра", "кадров")
-    return f"{range[0]}-{range[1]} ({count_of_frames} {plural_form})"
+def convert_to_text_range(range, frame_rate):
+    time_begin = range[0] / frame_rate
+    time_end = range[1] / frame_rate
+    minutes_begin = time_begin // 60
+    seconds_begin = time_begin % 60
+    minutes_end = time_end // 60
+    seconds_end = time_end % 60
+    return f"{range[0]}–{range[1]}" + " ({0:02d}:{1:02d} – {2:02d}:{3:02d})" \
+    .format(int(minutes_begin), int(seconds_begin), int(minutes_end), int(seconds_end))
 
-def convert_to_ranges(video_indexes, threshold):
+def convert_to_ranges(video_indexes, threshold, frame_rate):
     ranges = []
     prev_value = video_indexes[0]
 
@@ -60,12 +65,11 @@ def convert_to_ranges(video_indexes, threshold):
             ranges.append([prev_value, prev_value])
             continue
         else:
-            if index - prev_value == 1:
+            if index - prev_value <= 5:
                 ranges[-1][1] = index
             else:
                 ranges.append([index, index])
             prev_value = index
-        
-        ranges = [range for range in ranges if range[1] - range[0] >= threshold]
-        ranges = list(map(lambda a: convert_to_text_range(a), ranges))
-        return ranges
+    ranges = [range for range in ranges if range[1] - range[0] >= threshold]
+    ranges = list(map(lambda a: convert_to_text_range(a, frame_rate), ranges))
+    return ranges
