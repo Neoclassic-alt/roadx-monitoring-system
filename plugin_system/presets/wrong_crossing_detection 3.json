@@ -1,0 +1,33 @@
+{
+	"name": "Переход в неположенном месте (792 x 464)",
+	"description": "Позволяет определить переход в неположенном месте на видео #2",
+	"plugins": [
+		{
+			"title": "Распознавание людей",
+			"settings": {"size": "small", "threshold": 0.5, "color": "Фуксия"}
+		},
+		{
+			"title": "Контур пешеходного перехода",
+			"settings": {"point_one": [603, 149], "point_two": [687, 128], "point_three": [735, 196], "point_four": [673, 235], "color": "Красный", "display": false}
+		},
+		{
+			"title": "Контур дороги",
+			"settings": {"point_one": [2, 344], "point_two": [600, 148], "point_three": [671, 237], "point_four": [220, 465], "color": "Жёлтый", "display": false}
+		},
+		{
+			"title": "Контур дороги",
+			"settings": {"point_one": [688, 128], "point_two": [792, 94], "point_three": [792, 160], "point_four": [737, 192], "color": "Жёлтый", "display": false}
+		},
+		{
+			"title": "Распознавание светофоров",
+			"settings": {"size": "small", "threshold": 0.5, "color": "Зелёный"}
+		},
+		{
+			"title": "Информация о цвете светофора",
+			"settings": {"threshold": 0.01, "traffic_light_number": 1, "write_to_image": true}
+		},
+		{
+			"title": "Переход в неположенном месте"
+		}
+	]
+}

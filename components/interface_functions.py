@@ -19,18 +19,13 @@ def set_group_program_name_visible(sender, app_data):
 
 def save_program_settings():
     qop = dpg.get_value("quality_of_pictures")
-    auto_apply = dpg.get_value("auto_process_images")
     send_signal = dpg.get_value("send_beep")
     display_image_process = dpg.get_value("display_image_process")
     display_video_process = dpg.get_value("display_video_process")
-    new_settings = {"quality_of_pictures": qop, "auto_apply": auto_apply, "send_signal": send_signal,
+    new_settings = {"quality_of_pictures": qop, "auto_apply": False, "send_signal": send_signal,
     "display_image_process": display_image_process, "display_video_process": display_video_process}
     storage.set_value(keys.PROGRAM_SETTINGS, new_settings)
     dpg.show_item("settings_of_program_have_saved")
-    if auto_apply:
-        dpg.hide_item("apply_chain_of_plugins_button")
-    else:
-        dpg.show_item("apply_chain_of_plugins_button")
 
 def show_tool_panel():
     dpg.hide_item("hello_splash")
@@ -387,7 +382,7 @@ def show_image_data_frame(sender, app_data):
 def show_violations():
     dpg.delete_item("fixed_violations", children_only=True)
     if len(storage.violation_cases):
-        THRESHOLD_TIME = 1 # коэффициент отсеивания в секундах
+        THRESHOLD_TIME = 0.5 # коэффициент отсеивания в секундах
         FRAME_RATE = storage.frame_rate # кол-во кадров в секунду
         THRESHOLD = int(FRAME_RATE*THRESHOLD_TIME) # минимальная ширина диапазона
         plural_form = utils.plural(THRESHOLD, "кадр", "кадра", "кадров")

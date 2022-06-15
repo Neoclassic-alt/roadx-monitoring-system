@@ -600,48 +600,13 @@ dpg.bind_item_handler_registry("file_explorer_window", "resize_window_handler")
 dpg.bind_item_theme("file_explorer_window", "window_theme")
 
 #! окно с информацией в результате обработки
-with dpg.window(label="Информация, полученная в результате обработки", show=False, pos=(100, 100), 
+with dpg.window(label="Информационная панель", show=False, pos=(100, 100), 
 no_resize=True, tag="information_window", width=907, height=443):
     with dpg.group(tag="information_tab_bar"):
         with dpg.tab_bar():
-            with dpg.tab(label="   Видео", indent=20, tag="information_video_tab"):
-                dpg.add_text("Графики")
-                dpg.bind_item_font(dpg.last_item(), "tab_title")
-                dpg.add_color_button((64, 149, 227), width=46, height=3, no_drag_drop=True, 
-                no_border=True, pos=(22, 69))
-                with dpg.child_window(horizontal_scrollbar=True, height=-60):
-                    dpg.add_text('Графики отсутствуют', tag="no_plots_text")
-                    dpg.bind_item_font("no_plots_text", "mini_italic")
-                    dpg.add_group(horizontal=True, tag="video_plots_group")
-                    dpg.add_spacer()
-                with dpg.group(horizontal=True, tag="plot_combo_group", show=False):
-                    dpg.add_text("Раскрыть на полный экран:")
-                    with dpg.group():
-                        dpg.add_spacer(height=2)
-                        dpg.add_combo(["Не выбрано"], tag="plots_combo", default_value="Не выбрано", width=350, 
-                        callback=inf.open_plugin_window)
-                dpg.bind_item_theme("plots_combo", themes.combo_style())
-                dpg.add_spacer()
-            with dpg.tab(label="Изображение", indent=20, tag="information_image_tab"):
-                dpg.add_text("Информация от плагинов")
-                dpg.bind_item_font(dpg.last_item(), "tab_title")
-                dpg.add_color_button((64, 149, 227), width=102, height=3, no_drag_drop=True, 
-                no_border=True, pos=(94, 69))
-                dpg.add_text('В настоящее время здесь ничего нет', tag="no_image_data_text")
-                dpg.bind_item_font("no_image_data_text", "mini_italic")
-                with dpg.group(tag="image_index_slider_group", show=False):
-                    dpg.add_text("Выберите номер кадра:")
-                    with dpg.group(horizontal=True):
-                        dpg.add_slider_int(tag="image_index_slider", min_value=1, max_value=944, clamped=True, 
-                        callback=inf.show_image_data_frame, width=-175)
-                        dpg.add_button(label="Перейти к кадру", callback=lambda: pv.open_frame(dpg.get_value("image_index_slider") - 1))
-                    dpg.add_spacer(height=5)
-                dpg.bind_item_theme("image_index_slider_group", themes.slider_theme())
-                dpg.add_group(tag="info_from_image")
-                dpg.bind_item_theme("info_from_image", themes.image_data())
-            with dpg.tab(label="Фиксация", indent=20, tag="violations_tab"):
+            with dpg.tab(label="  Фиксация", indent=20, tag="violations_tab"):
                 dpg.add_color_button((64, 149, 227), width=73, height=3, no_drag_drop=True, 
-                no_border=True, pos=(221, 69))
+                no_border=True, pos=(18, 69))
                 dpg.add_text("Перейти к кадру")
                 dpg.bind_item_font(dpg.last_item(), "tab_title")
                 dpg.add_text('В данном видео не зафиксировано нарушений', tag="no_violations_text")
@@ -658,6 +623,41 @@ no_resize=True, tag="information_window", width=907, height=443):
                         tag="place_open_in_range", width=125)
                     dpg.bind_item_theme("place_open_in_range", "combo_style_2")
                     dpg.add_text("диапазона")
+            with dpg.tab(label="Диаграммы", indent=20, tag="information_video_tab"):
+                dpg.add_text("Просмотр диаграмм")
+                dpg.bind_item_font(dpg.last_item(), "tab_title")
+                dpg.add_color_button((64, 149, 227), width=87, height=3, no_drag_drop=True, 
+                no_border=True, pos=(115, 69))
+                with dpg.child_window(horizontal_scrollbar=True, height=-60, width=-20):
+                    dpg.add_text('Графики отсутствуют', tag="no_plots_text")
+                    dpg.bind_item_font("no_plots_text", "mini_italic")
+                    dpg.add_group(horizontal=True, tag="video_plots_group")
+                    dpg.add_spacer()
+                with dpg.group(horizontal=True, tag="plot_combo_group", show=False):
+                    dpg.add_text("Раскрыть на полный экран:")
+                    with dpg.group():
+                        dpg.add_spacer(height=2)
+                        dpg.add_combo(["Не выбрано"], tag="plots_combo", default_value="Не выбрано", width=350, 
+                        callback=inf.open_plugin_window)
+                dpg.bind_item_theme("plots_combo", themes.combo_style())
+                dpg.add_spacer()
+            with dpg.tab(label="Отчёты", indent=20, tag="information_image_tab"):
+                dpg.add_text("Информация от плагинов")
+                dpg.bind_item_font(dpg.last_item(), "tab_title")
+                dpg.add_color_button((64, 149, 227), width=56, height=3, no_drag_drop=True, 
+                no_border=True, pos=(228, 69))
+                dpg.add_text('В настоящее время здесь ничего нет', tag="no_image_data_text")
+                dpg.bind_item_font("no_image_data_text", "mini_italic")
+                with dpg.group(tag="image_index_slider_group", show=False):
+                    dpg.add_text("Выберите номер кадра:")
+                    with dpg.group(horizontal=True):
+                        dpg.add_slider_int(tag="image_index_slider", min_value=1, max_value=944, clamped=True, 
+                        callback=inf.show_image_data_frame, width=-175)
+                        dpg.add_button(label="Перейти к кадру", callback=lambda: pv.open_frame(dpg.get_value("image_index_slider") - 1))
+                    dpg.add_spacer(height=5)
+                dpg.bind_item_theme("image_index_slider_group", themes.slider_theme())
+                dpg.add_group(tag="info_from_image")
+                dpg.bind_item_theme("info_from_image", themes.image_data())
         dpg.bind_item_theme("information_tab_bar", themes.tabs_outline())
 dpg.bind_item_theme("information_window", "window_theme")
 
@@ -694,8 +694,6 @@ on_close=lambda: dpg.hide_item("settings_of_program_have_saved")):
         dpg.add_text("Качество изображений:")
         dpg.add_slider_int(min_value=0, max_value=100, 
         default_value=storage.program_settings["quality_of_pictures"], width=200, tag="quality_of_pictures")
-    dpg.add_checkbox(label="Автоматически обрабатывать изображение при изменении цепочки плагинов", 
-    default_value=storage.program_settings["auto_apply"], tag="auto_process_images")
     dpg.add_checkbox(label="Звуковое оповещение по окончании обработки видео", 
     default_value=storage.program_settings["send_signal"], tag="send_beep")
     dpg.add_checkbox(label="Отображать результаты обработки кадра", 

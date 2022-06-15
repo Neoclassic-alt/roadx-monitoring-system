@@ -15,7 +15,7 @@ def edit_image(img, parameters, app_info):
     results = app_info['heavy'](img)
 
     tensors = results.xyxy[0]
-    # только автомобили
+    # только светофоры
     tensors = tensors[tensors[:, 5] == 9]
     additional_text = ''
     for tensor in tensors:

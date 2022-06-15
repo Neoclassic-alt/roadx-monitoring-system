@@ -1,3 +1,5 @@
 **/*.pyc
 yolov5*
 components/test.py
+program.build
+program.dist
